@@ -1,13 +1,26 @@
 # --- Exception List for Tiling Windows ---
-# Each line contains the WM_CLASS of an application that should be ignored.
+# Each line contains an application identifier (WM_CLASS for X11, or App ID for Wayland)
+# that should be ignored by the tiling manager.
+# For best results, add both identifiers for an application if they differ.
 # Uppercase and lowercase letters are ignored.
 
-# Command to find WM_CLASS:
-# 1. Open Terminal
-# 2. Type ‘xprop WM_CLASS’ and press Enter.
-# 3. Click on the desired window with your mouse.
+# -----------------------------------------------------------
+# Finding the App ID (for Wayland & modern apps)
+# -----------------------------------------------------------
+# 1. Press Alt + F2, type 'lg', and press Enter.
+# 2. In the Looking Glass window, click the "Windows" tab.
+# 3. Click on the desired window to see its details.
+# 4. Find the value for "app id" and add it to a new line below.
 
-extension-manager
-gnome-screenshot
-org.gnome.NautilusPreviewer
-org.gnome.Shell.Extensions
+# -----------------------------------------------------------
+# Finding the WM_CLASS (for X11)
+# -----------------------------------------------------------
+# 1. Open a terminal.
+# 2. Type 'xprop WM_CLASS' and press Enter.
+# 3. Your cursor will turn into a crosshair. Click on the desired window.
+# 4. The terminal will output a line like: WM_CLASS(STRING) = "navigator", "Firefox".
+# 5. Add one of these values (e.g., "firefox") to a new line below.
+
+# --- Start of the Exception List ---
+
+ulauncher
