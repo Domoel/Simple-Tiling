@@ -63,6 +63,7 @@ Use the [GNOME Shell Extensions website](https://extensions.gnome.org/extension/
 5.  **Compile the GSettings schema.** This is a mandatory step for the keyboard shortcuts to work.
 
     ```bash
+    cd ~/.local/share/gnome-shell/extensions/simple-tiling@domoel
     glib-compile-schemas schemas/
     ```
     
