@@ -1,9 +1,15 @@
 {
   "uuid": "simple-tiling@domoel",
   "name": "Simple Tiling",
-  "description": "A Simple Tiling Extension for Gnome Shell 3.38.",
+  "description": "A Simple Tiling Extension for Gnome Shell.",
   "version": 6,
-  "shell-version": [ "3.38" ],
+  "shell-version": [
+    "3.38",
+    "45",
+    "46",
+    "47",
+    "48"
+  ],
   "settings-schema": "org.gnome.shell.extensions.simple-tiling.domoel",
   "preferences_ui": "prefs.js",
   "url": "https://github.com/Domoel/Simple-Tiling",
