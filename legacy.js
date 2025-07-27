@@ -313,9 +313,7 @@ class Tiler {
 
         this._innerGap = this._settings.get_int("inner-gap");
         this._outerGapVertical = this._settings.get_int("outer-gap-vertical");
-        this._outerGapHorizontal = this._settings.get_int(
-            "outer-gap-horizontal"
-        );
+        this._outerGapHorizontal = this._settings.get_int("outer-gap-horizontal");
 
         this._tilingDelay = TILING_DELAY_MS;
         this._centeringDelay = CENTERING_DELAY_MS;
@@ -377,9 +375,7 @@ class Tiler {
     _onSettingsChanged() {
         this._innerGap = this._settings.get_int("inner-gap");
         this._outerGapVertical = this._settings.get_int("outer-gap-vertical");
-        this._outerGapHorizontal = this._settings.get_int(
-            "outer-gap-horizontal"
-        );
+        this._outerGapHorizontal = this._settings.get_int("outer-gap-horizontal");
         this.queueTile();
     }
 
@@ -400,10 +396,10 @@ class Tiler {
     }
 
     _isException(win) {
-        return (
-            !!win &&
-            this._exceptions.includes((win.get_wm_class() || "").toLowerCase())
-        );
+        if (!win) return false;
+        const wmClass = (win.get_wm_class() || "").toLowerCase();
+        const appId = (win.get_gtk_application_id() || "").toLowerCase();
+        return this._exceptions.includes(wmClass) || this._exceptions.includes(appId);
     }
 
     _isTileable(win) {
