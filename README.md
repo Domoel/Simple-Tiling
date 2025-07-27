@@ -51,19 +51,24 @@ Use the [GNOME Shell Extensions website](https://extensions.gnome.org/extension/
 #### Manual Installation
 
 1. **Navigate to your extensions folder:**
+
    ```bash
    cd ~/.local/share/gnome-shell/extensions/
    ```
-2. **Clone the repository directly into a folder named after the extension's UUID:**
+3. **Clone the repository directly into a folder named after the extension's UUID:**
+
    ```bash
    git clone https://github.com/Domoel/Simple-Tiling.git simple-tiling@domoel
    ```
-3.  **Compile the GSettings schema.** This is a mandatory step for the keyboard shortcuts to work.
+5.  **Compile the GSettings schema.** This is a mandatory step for the keyboard shortcuts to work.
+
     ```bash
     glib-compile-schemas schemas/
     ```
+    
 3.  **Restart GNOME Shell.** Press `Alt` + `F2`, type `r`, and press `Enter`.
-4.  **Enable the extension** using the GNOME Extensions app or GNOME Tweaks.
+   
+5.  **Enable the extension** using the GNOME Extensions app or GNOME Tweaks.
 
 ## Configuration
 
