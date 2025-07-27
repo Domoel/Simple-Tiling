@@ -410,10 +410,12 @@ class Tiler {
     }
 
     _isException(win) {
-        return (
-            !!win &&
-            this._exceptions.includes((win.get_wm_class() || "").toLowerCase())
-        );
+        if (!win) return false;
+
+        const wmClass = (win.get_wm_class() || "").toLowerCase();
+        const appId = (win.get_gtk_application_id() || "").toLowerCase();
+
+        return this._exceptions.includes(wmClass) || this._exceptions.includes(appId);
     }
 
     _isTileable(win) {
