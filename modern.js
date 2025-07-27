@@ -411,10 +411,8 @@ class Tiler {
 
     _isException(win) {
         if (!win) return false;
-
         const wmClass = (win.get_wm_class() || "").toLowerCase();
         const appId = (win.get_gtk_application_id() || "").toLowerCase();
-
         return this._exceptions.includes(wmClass) || this._exceptions.includes(appId);
     }
 
