@@ -71,6 +71,8 @@ Use the [GNOME Shell Extensions website](https://extensions.gnome.org/extension/
    
 5.  **Enable the extension** using the GNOME Extensions app or GNOME Tweaks.
 
+**Note:** You have to use "simple-tiling@domoel" as your extension folder / directory. Put all necessary files into this directory. Otherwise the extension will not show up in extension manager.
+
 ## Configuration
 
 #### Keyboard Shortcuts
