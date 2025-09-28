@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////
-//      Simple‑Tiling – MODERN (GNOME Shell 49+)          //
+//      Simple‑Tiling – MODERN (GNOME Shell 45-48)          //
 //               © 2025 domoel – MIT                       //
 /////////////////////////////////////////////////////////////
 
@@ -347,8 +347,8 @@ class Tiler {
                 if (index > -1) this._centerTimeoutIds.splice(index, 1);
 
                 if (!win || !win.get_display()) return GLib.SOURCE_REMOVE;
-                if (win.is_maximized())
-                    win.unmaximize();
+                if (win.get_maximized())
+                    win.unmaximize(Meta.MaximizeFlags.BOTH);
 
                 const monitorIndex = win.get_monitor();
                 const workspace = this._workspaceManager.get_active_workspace();
@@ -558,7 +558,7 @@ class Tiler {
             height: workArea.height - 2 * this._outerGapVertical,
         };
         windowsToTile.forEach((win) => {
-            if (win.is_maximized()) win.unmaximize();
+            if (win.get_maximized()) win.unmaximize(Meta.MaximizeFlags.BOTH);
         });
         if (windowsToTile.length === 1) {
             windowsToTile[0].move_resize_frame(
