@@ -29,7 +29,7 @@ This extension was built from the ground up to be stable and performant on **GNO
     * **Keyboard Shortcuts:** A full set of keyboard shortcuts allows you to swap the focused window with the master or with its nearest neighbor in any direction (left, right, up, down).
 * **Interactive Window Focus Switcher:** Change the current window focus with a set of customizable keyboard shortcuts in every direction (left, right, up, down).
 * **Simple Settings Panel:** A simple settings panel within the gnome extension manager menu to adjust key bindings, window gaps / margins and window behavior.
-* **External Exception List:** Use a simple `exceptions.txt` file to list applications (by their `WM_CLASS` or `App ID`) that should be ignored by the tiling manager.
+* **External Exception List:** Use a simple `exceptions.txt` file to list applications (by their `WM_CLASS`) that should be ignored by the tiling manager.
 * **Smart Pop-up Handling:** Windows on the exception list, as well as dialogs and other pop-ups, are automatically centered and kept "always on top" for a smooth workflow.
 * **Configurable Tiling Window Delays:** Easily configure the tiling window delays if you have race condition issues by editing variables directly in the `extension.js`.
 
@@ -37,7 +37,7 @@ This extension was built from the ground up to be stable and performant on **GNO
 
 Please note that this extension has been developed for a very specific environment. However, with the latest updates, I have ensured that modern Gnome Shells and Wayland are also supported.
 
-* **GNOME Shell Version:** **3.38 - 48**
+* **GNOME Shell Version:** **3.38 - 49**
 * **Session Type:** **X11** (Wayland is still in beta but should be fine!).
 * **Monitor Setup:** **Single monitor only.** Multi-monitor support is not yet implemented.
 
@@ -122,4 +122,3 @@ This extension was built to solve a specific need. However, future enhancements 
 ## License
 
 This project is licensed under the MIT License - see the `LICENSE` file for details.
-
