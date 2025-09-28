@@ -4,6 +4,10 @@
   "description": "A Simple Tiling Extension for Gnome Shell.",
   "version": __VERSION__,
   "shell-version": [
+    "45",
+    "46",
+    "47",
+    "48",
     "49"
   ],
   "settings-schema": "org.gnome.shell.extensions.simple-tiling.domoel",
