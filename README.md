@@ -16,7 +16,7 @@ A lightweight, opinionated, and automatic tiling window manager for GNOME Shell
 
 Simple Tiling is a GNOME Shell extension created for users who want a clean, predictable, and automatic tiling layout without the complexity of larger, more feature-heavy tiling extensions. It is designed to be simple to configure and intuitive to use, focusing on a core set of essential tiling features.
 
-This extension was built from the ground up to be stable and performant on **GNOME Shell 3.38**. However it is now also supporting modern gnome shells up to **version 48**.
+This extension was built from the ground up to be stable and performant on **GNOME Shell 3.38**. However it is now also supporting modern gnome shells up to **version 49**.
 
 ## Features
 
