@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////
-//      Simple‑Tiling – MODERN (GNOME Shell 49+)          //
+//      Simple‑Tiling – MODERN (GNOME Shell 45 - 49)          //
 //               © 2025 domoel – MIT                       //
 /////////////////////////////////////////////////////////////
 
@@ -14,6 +14,7 @@ import GLib            from 'gi://GLib';
 import Clutter         from 'gi://Clutter';
 
 // ── CONST ────────────────────────────────────────────
+const SHELL_MAJOR = parseInt(Shell.get_session().get_shell_version().split('.')[0]);
 const WM_SCHEMA          = 'org.gnome.desktop.wm.keybindings';
 
 const TILING_DELAY_MS    = 20;   // Change Tiling Window Delay
@@ -347,8 +348,15 @@ class Tiler {
                 if (index > -1) this._centerTimeoutIds.splice(index, 1);
 
                 if (!win || !win.get_display()) return GLib.SOURCE_REMOVE;
-                if (win.is_maximized())
-                    win.unmaximize();
+		if (SHELL_MAJOR < 49) {
+                    if (win.get_maximized()) {
+                        win.unmaximize(Meta.MaximizeFlags.BOTH);
+                    }
+                } else {
+                    if (win.is_maximized()) {
+                        win.unmaximize();
+                    }
+                }
 
                 const monitorIndex = win.get_monitor();
                 const workspace = this._workspaceManager.get_active_workspace();
@@ -558,7 +566,15 @@ class Tiler {
             height: workArea.height - 2 * this._outerGapVertical,
         };
         windowsToTile.forEach((win) => {
-            if (win.is_maximized()) win.unmaximize();
+            if (SHELL_MAJOR < 49) {
+                if (win.get_maximized()) {
+                    win.unmaximize(Meta.MaximizeFlags.BOTH);
+                }
+            } else {
+                if (win.is_maximized()) {
+                    win.unmaximize();
+                }
+            }
         });
         if (windowsToTile.length === 1) {
             windowsToTile[0].move_resize_frame(
