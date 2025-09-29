@@ -14,7 +14,6 @@ import GLib            from 'gi://GLib';
 import Clutter         from 'gi://Clutter';
 
 // ── CONST ────────────────────────────────────────────
-const SHELL_MAJOR = parseInt(Shell.get_session().get_shell_version().split('.')[0]);
 const WM_SCHEMA          = 'org.gnome.desktop.wm.keybindings';
 
 const TILING_DELAY_MS    = 20;   // Change Tiling Window Delay
@@ -31,6 +30,15 @@ const KEYBINDINGS = {
     'focus-up':           (self) => self._focusInDirection('up'),
     'focus-down':         (self) => self._focusInDirection('down'),
 };
+
+// ── VERSION CHECK ────────────────────────────────────────────
+let shellVersion;
+if (Shell.get_session) {
+    shellVersion = Shell.get_session().get_shell_version();
+} else {
+    shellVersion = global.shell_version;
+}
+const SHELL_MAJOR = parseInt(shellVersion.split('.')[0]);
 
 // ── HELPER‑FUNCTION ────────────────────────────────────────
 function getPointerXY() {
