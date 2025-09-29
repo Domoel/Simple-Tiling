@@ -10,8 +10,9 @@ import Shell           from 'gi://Shell';
 import Gio             from 'gi://Gio';
 import GLib            from 'gi://GLib';
 import Clutter         from 'gi://Clutter';
-import { Extension }  from 'resource:///org/gnome/shell/extensions/extension.js';
+import { Extension }   from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main       from 'resource:///org/gnome/shell/ui/main.js';
+import * as Config 	   from 'resource:///org/gnome/shell/misc/config.js';
 
 // ── CONST ────────────────────────────────────────────
 const WM_SCHEMA          = 'org.gnome.desktop.wm.keybindings';
@@ -35,6 +36,8 @@ const KEYBINDINGS = {
 let shellVersion;
 if (Shell.get_session) {
     shellVersion = Shell.get_session().get_shell_version();
+} else if (Config.PACKAGE_VERSION) {
+    shellVersion = Config.PACKAGE_VERSION;
 } else {
     shellVersion = global.shell_version;
 }
