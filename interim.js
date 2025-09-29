@@ -5,12 +5,13 @@
 
 
 // ── GLOBAL IMPORTS ────────────────────────────────────────
-import { Extension } from "resource:///org/gnome/shell/extensions/js/extensions/extension.js";
-import * as Main from "resource:///org/gnome/shell/ui/main.js";
-import Meta from "gi://Meta";
-import Shell from "gi://Shell";
-import Gio from "gi://Gio";
-import GLib from "gi://GLib";
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Clutter from 'gi://Clutter';
+import { Extension } from 'resource:///org/gnome/shell/extensions/js/extensions/extension.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 // ── CONST ────────────────────────────────────────────
 const WM_SCHEMA          = 'org.gnome.desktop.wm.keybindings';
