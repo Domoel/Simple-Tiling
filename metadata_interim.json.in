@@ -4,7 +4,6 @@
   "description": "A Simple Tiling Extension for Gnome Shell.",
   "version": __VERSION__,
   "shell-version": [
-    "40",
     "41",
     "42",
     "43",
