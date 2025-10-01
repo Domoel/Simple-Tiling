@@ -49,7 +49,7 @@ Use the [GNOME Shell Extensions website](https://extensions.gnome.org/extension/
 
 #### Manual Installation
 
-The repository includes a Makefile that produces ready‑to‑install ZIP packages for the three supported Gnome‑Shell lines (a legacy build for Gnome-Shell 3.38, an interim build for Gnome-Shell 40 - 44 and a modern build for Gnome-Shell 45+).
+The repository includes a Makefile that produces ready‑to‑install ZIP packages for the three supported Gnome‑Shell lines (a legacy build for Gnome-Shell 3.38, an enterprise build for Gnome-Shell 40, an interim build for Gnome-Shell 41 - 44 and a modern build for Gnome-Shell 45+).
 
 1. **Clone the Source**
    ```bash
@@ -62,10 +62,11 @@ The repository includes a Makefile that produces ready‑to‑install ZIP packag
    Open the Terminal within the Simple-Tiling directory and run
    ```bash
    make install-legacy        # Installs Legacy Extension (Gnome-Shell 3.38)
-   make install-interim       # Installs Interim Extension (Gnome-Shell 40 - 44)
+   make install-enterprise    # Installs Enterprise Extension (Gnome-Shell 40)
+   make install-interim       # Installs Interim Extension (Gnome-Shell 41 - 44)
    make install-modern        # Installs Modern Extension (Gnome-Shell 45+)
    ```
-   **Note:** This command will directly install the extension in the choosen variant (legacy, interim or modern). If you want to manually create and upload the extension to your gnome extensions directory `(~/.local/share/gnome-shell/extensions)` you can just run `make build` to create all versions as .zip or `make build-legacy`, `make build-interim` or `make build-modern` to create them seperately as .zip. To enable them you need to unzip these archives and put them into your extensions directory.
+   **Note:** This command will directly install the extension in the choosen variant (legacy, interim or modern). If you want to manually create and upload the extension to your gnome extensions directory `(~/.local/share/gnome-shell/extensions)` you can just run `make build` to create all versions as .zip or `make build-legacy`, `make build-enterprise`, `make build-interim` or `make build-modern` to create them seperately as .zip. To enable them you need to unzip these archives and put them into your extensions directory.
 
 4.  **Reload the shell**
     ```bash
