@@ -9,7 +9,6 @@ const { Meta, Shell, Gio, GLib, Clutter } = imports.gi;
 const Main = imports.ui.main;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
-const Extension = imports.ui.extension.Extension;
 
 // ── CONST ────────────────────────────────────────────
 const WM_SCHEMA          = 'org.gnome.desktop.wm.keybindings';
@@ -590,16 +589,16 @@ class Tiler {
 }
 
 // ── EXTENSION‑WRAPPER ──────────────────────────
-var EnterpriseExtension = class EnterpriseExtension extends Extension {
-    enable() {
-        this.tiler = new Tiler(this);
-        this.tiler.enable();
-    }
+let tiler;
 
-    disable() {
-        if (this.tiler) {
-            this.tiler.disable();
-            this.tiler = null;
-        }
+function enable() {
+    tiler = new Tiler(Me);
+    tiler.enable();
+}
+
+function disable() {
+    if (tiler) {
+        tiler.disable();
+        tiler = null;
     }
-};
+}
