@@ -12,7 +12,7 @@ import GLib            from 'gi://GLib';
 import Clutter         from 'gi://Clutter';
 import { Extension }   from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main       from 'resource:///org/gnome/shell/ui/main.js';
-import * as Config 	   from 'resource:///org/gnome/shell/misc/config.js';
+import * as Config     from 'resource:///org/gnome/shell/misc/config.js';
 
 // ── CONST ────────────────────────────────────────────
 const WM_SCHEMA          = 'org.gnome.desktop.wm.keybindings';
@@ -113,16 +113,17 @@ class InteractionHandler {
     }
 
     _bind(key, handler) {
-        global.display.add_keybinding(
+        Main.wm.addKeybinding(
             key,
             this._settings,
             Meta.KeyBindingFlags.NONE,
+            Shell.ActionMode.NORMAL,
             (..._args) => handler(this)
         );
     }
 
     _bindAllShortcuts()  { for (const [k,h] of Object.entries(KEYBINDINGS)) this._bind(k, h); }
-    _unbindAllShortcuts(){ for (const k in KEYBINDINGS) global.display.remove_keybinding(k); }
+    _unbindAllShortcuts(){ for (const k in KEYBINDINGS) Main.wm.removeKeybinding(k); }
 
     _onSettingsChanged() {
         this._unbindAllShortcuts();
