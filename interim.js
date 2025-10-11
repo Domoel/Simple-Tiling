@@ -101,7 +101,7 @@ class InteractionHandler {
     }
 
     _bind(key, handler) {
-        global.display.add_keybinding(
+        Main.wm.addKeybinding(
             key,
             this._settings,
             Meta.KeyBindingFlags.NONE,
@@ -111,7 +111,7 @@ class InteractionHandler {
     }
 
     _bindAllShortcuts()  { for (const [k,h] of Object.entries(KEYBINDINGS)) this._bind(k, h); }
-    _unbindAllShortcuts(){ for (const k in KEYBINDINGS) global.display.remove_keybinding(k); }
+    _unbindAllShortcuts(){ for (const k in KEYBINDINGS) Main.wm.removeKeybinding(k); }
 
     _onSettingsChanged() {
         this._unbindAllShortcuts();
