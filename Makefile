@@ -14,7 +14,7 @@
 ###############################################################################
 
 UUID     := simple-tiling@domoel
-VERSION  := 7.5
+VERSION  := 7.6
 EXTDIR   := $(HOME)/.local/share/gnome-shell/extensions
 
 COMMON_FILES     := schemas exceptions.txt locale *.css README.md LICENSE
