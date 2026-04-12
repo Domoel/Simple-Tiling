@@ -21,8 +21,6 @@ A lightweight, opinionated, and automatic tiling window manager for GNOME Shell
   <a href="https://look.ztfr.eu/#/#support:ztfr.eu">💬 Supportchat</a> 
 </h6>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
 <img width="2560" height="1440" alt="Simple-Tiling-v6" src="https://github.com/user-attachments/assets/eb0f7cc3-6a5a-4036-8a1e-8f945c52e55c" />
 
 ## Introduction
