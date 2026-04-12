@@ -125,6 +125,10 @@ This extension was built to solve a specific need. However, future enhancements 
 * Additional layout algorithms.
 * A more detailed settings panel to configure other options via a GUI.
 
+## Development & Support
+
+If you need to get support or want to participate in the active development of this software, you can <a href="https://ztfr.eu/matrix">join our Zeitfresser Matrix Community</a> or the <a href="https://look.ztfr.eu/#/#support:ztfr.eu">Development & Support Channel</a>
+
 ## License
 
 This project is licensed under the MIT License - see the `LICENSE` file for details.
