@@ -18,6 +18,8 @@ A lightweight, opinionated, and automatic tiling window manager for GNOME Shell
   ·
   <a href="https://ztfr.eu/matrix">📰 Zeitfresser Matrix Community</a>
   ·
+  <a href="https://social.ztfr.eu/@dome">🐘 Mastodon</a> 
+  ·
   <a href="https://look.ztfr.eu/#/#support:ztfr.eu">💬 Supportchat</a> 
 </h6>
 <br>
