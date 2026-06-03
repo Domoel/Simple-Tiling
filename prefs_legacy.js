@@ -73,6 +73,12 @@ function buildPrefsWidget() {
     addKeybinding(store, settings, "focus-left", "Focus window to the left");
     addKeybinding(store, settings, "focus-right", "Focus window to the right");
 
+    addKeybinding(store, settings, "toggle-tiling", "Toggle tiling on/off");
+    addKeybinding(store, settings, "float-window", "Float / unfloat focused window");
+    addKeybinding(store, settings, "toggle-monocle", "Toggle monocle mode");
+    addKeybinding(store, settings, "monocle-next", "Next window (monocle)");
+    addKeybinding(store, settings, "monocle-prev", "Previous window (monocle)");
+
     let treeView = new Gtk.TreeView({
         model: store,
         headers_visible: false,
@@ -140,6 +146,7 @@ function buildPrefsWidget() {
     addSpinButtonRow(gapsGrid, settings, "Inner Gap", "inner-gap", 0);
     addSpinButtonRow(gapsGrid, settings, "Outer Gap (horizontal)", "outer-gap-horizontal", 1);
     addSpinButtonRow(gapsGrid, settings, "Outer Gap (vertical)", "outer-gap-vertical", 2);
+    addSpinButtonRow(gapsGrid, settings, "Master Width (%)", "master-ratio", 3);
 
     prefsWidget.add(gapsFrame);
 

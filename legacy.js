@@ -29,6 +29,11 @@ const KEYBINDINGS = {
     'focus-right':        (self) => self._focusInDirection('right'),
     'focus-up':           (self) => self._focusInDirection('up'),
     'focus-down':         (self) => self._focusInDirection('down'),
+    'toggle-tiling':      (self) => self.tiler._toggleTiling(),
+    'float-window':       (self) => self.tiler._floatFocused(),
+    'toggle-monocle':     (self) => self.tiler._toggleMonocle(),
+    'monocle-next':       (self) => self.tiler._monocleNext(),
+    'monocle-prev':       (self) => self.tiler._monoclePrev(),
 };
 
 // --- INTERACTIONHANDLER ---
@@ -306,14 +311,18 @@ class Tiler {
         this._signalIds = new Map();
         this._tileInProgress = false;
 
-        this._innerGap = this._settings.get_int("inner-gap");
-        this._outerGapVertical = this._settings.get_int("outer-gap-vertical");
+        this._innerGap           = this._settings.get_int("inner-gap");
+        this._outerGapVertical   = this._settings.get_int("outer-gap-vertical");
         this._outerGapHorizontal = this._settings.get_int("outer-gap-horizontal");
+        this._masterRatio        = this._settings.get_int("master-ratio");
 
         this._tilingDelay = TILING_DELAY_MS;
         this._centeringDelay = CENTERING_DELAY_MS;
 
-        this._exceptions = [];
+        this._exceptions     = [];
+        this._floatedWindows = new Set();
+        this._tilingEnabled  = true;
+        this._monocleEnabled = false;
         this._interactionHandler = new InteractionHandler(this);
 
         this._tileTimeoutId = null;
@@ -371,6 +380,7 @@ class Tiler {
         this._innerGap           = this._settings.get_int("inner-gap");
         this._outerGapVertical   = this._settings.get_int("outer-gap-vertical");
         this._outerGapHorizontal = this._settings.get_int("outer-gap-horizontal");
+        this._masterRatio        = this._settings.get_int("master-ratio");
         this._exceptions         = this._settings.get_strv("exceptions").map(e => e.toLowerCase());
         if (key === "exceptions")
             this._reEvaluateExceptions();
@@ -410,6 +420,7 @@ class Tiler {
             win &&
             !win.minimized &&
             !this._isException(win) &&
+            !this._floatedWindows.has(win) &&
             win.get_window_type() === Meta.WindowType.NORMAL
         );
     }
@@ -451,6 +462,7 @@ class Tiler {
     }
 
     _onWindowAdded(workspace, win) {
+        if (!this._tilingEnabled) return;
         if (this.windows.includes(win)) return;
 
         if (this._isException(win)) {
@@ -489,6 +501,7 @@ class Tiler {
     }
 
     _onWindowRemoved(workspace, win, capturedId = null) {
+        this._floatedWindows.delete(win);
         const index = this.windows.indexOf(win);
         if (index > -1) this.windows.splice(index, 1);
 
@@ -530,6 +543,7 @@ class Tiler {
     }
 
     _disconnectFromWorkspace() {
+        this._floatedWindows.clear();
         for (const win of this.windows) {
             let winId;
             try { winId = win.get_id(); } catch { continue; }
@@ -554,7 +568,7 @@ class Tiler {
     }
 
     queueTile() {
-        if (this._tileInProgress || this._tileTimeoutId) return;
+        if (!this._tilingEnabled || this._tileInProgress || this._tileTimeoutId) return;
         this._tileInProgress = true;
         
         this._tileTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, this._tilingDelay, () => {
@@ -649,6 +663,13 @@ class Tiler {
                 if (win.get_maximized()) win.unmaximize(Meta.MaximizeFlags.BOTH);
             });
 
+            if (this._monocleEnabled) {
+                wins.forEach(win =>
+                    win.move_resize_frame(true, innerArea.x, innerArea.y,
+                                         innerArea.width, innerArea.height));
+                continue;
+            }
+
             if (wins.length === 1) {
                 wins[0].move_resize_frame(
                     true,
@@ -659,7 +680,7 @@ class Tiler {
             }
 
             const gap = Math.floor(this._innerGap / 2);
-            const masterWidth = Math.floor(innerArea.width / 2) - gap;
+            const masterWidth = Math.floor(innerArea.width * this._masterRatio / 100) - gap;
             wins[0].move_resize_frame(
                 true,
                 innerArea.x, innerArea.y,
@@ -673,6 +694,83 @@ class Tiler {
             };
             this._splitLayout(wins.slice(1), stackArea);
         }
+    }
+
+    _toggleTiling() {
+        this._tilingEnabled = !this._tilingEnabled;
+        if (this._tilingEnabled) {
+            const workspace = global.workspace_manager.get_active_workspace();
+            workspace.list_windows().forEach(win => this._onWindowAdded(workspace, win));
+        } else {
+            this._monocleEnabled = false;
+            for (const win of this.windows) {
+                let winId;
+                try { winId = win.get_id(); } catch { continue; }
+                ["unmanaged", "size-changed", "minimized"].forEach(prefix => {
+                    const key = `${prefix}-${winId}`;
+                    if (this._signalIds.has(key)) {
+                        const { object, id } = this._signalIds.get(key);
+                        try { object.disconnect(id); } catch {}
+                        this._signalIds.delete(key);
+                    }
+                });
+            }
+            this.windows = [];
+            this._floatedWindows.clear();
+        }
+    }
+
+    _floatFocused() {
+        const win = global.display.get_focus_window();
+        if (!win) return;
+        if (this._floatedWindows.has(win)) {
+            this._floatedWindows.delete(win);
+            if (this._isTileable(win)) {
+                const ws = global.workspace_manager.get_active_workspace();
+                this._onWindowAdded(ws, win);
+            }
+        } else if (this.windows.includes(win)) {
+            this.windows.splice(this.windows.indexOf(win), 1);
+            this._floatedWindows.add(win);
+            let winId;
+            try { winId = win.get_id(); } catch { this.queueTile(); return; }
+            ["unmanaged", "size-changed", "minimized"].forEach(prefix => {
+                const key = `${prefix}-${winId}`;
+                if (this._signalIds.has(key)) {
+                    const { object, id } = this._signalIds.get(key);
+                    try { object.disconnect(id); } catch {}
+                    this._signalIds.delete(key);
+                }
+            });
+            this.queueTile();
+        }
+    }
+
+    _toggleMonocle() {
+        if (!this._tilingEnabled) return;
+        this._monocleEnabled = !this._monocleEnabled;
+        this.tileNow();
+    }
+
+    _monocleNext() {
+        if (!this._tilingEnabled || !this._monocleEnabled) return;
+        const focused = global.display.get_focus_window();
+        const monitorIdx = focused ? focused.get_monitor() : -1;
+        const wins = this.windows.filter(w => !w.minimized &&
+            (monitorIdx < 0 || w.get_monitor() === monitorIdx));
+        if (wins.length < 2) return;
+        wins[(wins.indexOf(focused) + 1) % wins.length].activate(global.get_current_time());
+    }
+
+    _monoclePrev() {
+        if (!this._tilingEnabled || !this._monocleEnabled) return;
+        const focused = global.display.get_focus_window();
+        const monitorIdx = focused ? focused.get_monitor() : -1;
+        const wins = this.windows.filter(w => !w.minimized &&
+            (monitorIdx < 0 || w.get_monitor() === monitorIdx));
+        if (wins.length < 2) return;
+        const idx = wins.indexOf(focused);
+        wins[(idx - 1 + wins.length) % wins.length].activate(global.get_current_time());
     }
 }
 

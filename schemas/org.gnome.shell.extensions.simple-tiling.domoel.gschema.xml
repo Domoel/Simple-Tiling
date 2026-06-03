@@ -59,6 +59,33 @@
       <description>Determines if a new window is added as master or stack window.</description>
     </key>
 
+    <key name="master-ratio" type="i">
+      <range min="20" max="80"/>
+      <default>50</default>
+      <summary>Width of the master window as a percentage of the work area.</summary>
+    </key>
+
+    <key name="toggle-tiling" type="as">
+      <default>[]</default>
+      <summary>Toggle tiling on/off.</summary>
+    </key>
+    <key name="float-window" type="as">
+      <default>[]</default>
+      <summary>Toggle float for the focused window.</summary>
+    </key>
+    <key name="toggle-monocle" type="as">
+      <default>[]</default>
+      <summary>Toggle monocle mode (all windows fill the work area).</summary>
+    </key>
+    <key name="monocle-next" type="as">
+      <default>[]</default>
+      <summary>Focus the next window in monocle mode.</summary>
+    </key>
+    <key name="monocle-prev" type="as">
+      <default>[]</default>
+      <summary>Focus the previous window in monocle mode.</summary>
+    </key>
+
     <key name="exceptions" type="as">
       <default>['ulauncher', 'steam', 'element', 'totem', 'extension-manager', 'timeshift-gtk', 'gnome-screenshot', 'org.gnome.nautiluspreviewer', 'org.gnome.shell.extensions', 'evolution-alarm-notify']</default>
       <summary>List of window classes or app IDs excluded from tiling.</summary>

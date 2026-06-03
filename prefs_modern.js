@@ -50,6 +50,14 @@ export default class SimpleTilingPrefs extends ExtensionPreferences {
         const groupBehavior = new Adw.PreferencesGroup({ title: 'Window Behavior' });
         page.add(groupBehavior);
 
+        const rowMasterRatio = new Adw.SpinRow({
+            title: 'Master Window Width',
+            subtitle: 'Percentage of the work area (20–80 %)',
+            adjustment: new Gtk.Adjustment({ lower: 20, upper: 80, step_increment: 5 }),
+        });
+        groupBehavior.add(rowMasterRatio);
+        settings.bind('master-ratio', rowMasterRatio, 'value', Gio.SettingsBindFlags.DEFAULT);
+
         const rowNewWindow = new Adw.ComboRow({
             title: 'Open new windows as',
             subtitle: 'Whether a new window starts as Master or Stack',
