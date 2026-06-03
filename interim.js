@@ -77,8 +77,8 @@ class InteractionHandler {
 
         this._grabOpIds.push(
             global.display.connect('grab-op-begin',
-                (_, __, win) => { if (this.tiler.windows.includes(win))
-                                      this.tiler.grabbedWindow = win; })
+                (_, win) => { if (this.tiler.windows.includes(win))
+                                  this.tiler.grabbedWindow = win; })
         );
         this._grabOpIds.push(
             global.display.connect('grab-op-end', () => this._onGrabEnd())
@@ -366,12 +366,8 @@ class Tiler {
                 );
 
                 GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                    if (win.get_display()) {
-                        if (typeof win.set_keep_above === "function")
-                            win.set_keep_above(true);
-                        else if (typeof win.make_above === "function")
-                            win.make_above();
-                    }
+                    if (win.get_display())
+                        win.make_above();
                     return GLib.SOURCE_REMOVE;
                 });
                 return GLib.SOURCE_REMOVE;
@@ -549,6 +545,7 @@ class Tiler {
         if (windowsToTile.length === 0) return;
 
         const monitor = Main.layoutManager.primaryMonitor;
+        if (!monitor) return;
         const workspace = this._workspaceManager.get_active_workspace();
         const workArea = workspace.get_work_area_for_monitor(monitor.index);
 

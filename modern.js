@@ -12,7 +12,6 @@ import GLib            from 'gi://GLib';
 import Clutter         from 'gi://Clutter';
 import { Extension }   from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main       from 'resource:///org/gnome/shell/ui/main.js';
-import * as Config     from 'resource:///org/gnome/shell/misc/config.js';
 
 // ── CONST ────────────────────────────────────────────
 const WM_SCHEMA          = 'org.gnome.desktop.wm.keybindings';
@@ -31,17 +30,6 @@ const KEYBINDINGS = {
     'focus-up':           (self) => self._focusInDirection('up'),
     'focus-down':         (self) => self._focusInDirection('down'),
 };
-
-// ── VERSION CHECK ────────────────────────────────────────────
-let shellVersion;
-if (Shell.get_session) {
-    shellVersion = Shell.get_session().get_shell_version();
-} else if (Config.PACKAGE_VERSION) {
-    shellVersion = Config.PACKAGE_VERSION;
-} else {
-    shellVersion = global.shell_version;
-}
-const SHELL_MAJOR = parseInt(shellVersion.split('.')[0]);
 
 // ── HELPER‑FUNCTION ────────────────────────────────────────
 function getPointerXY() {
@@ -89,8 +77,8 @@ class InteractionHandler {
 
         this._grabOpIds.push(
             global.display.connect('grab-op-begin',
-                (_, __, win) => { if (this.tiler.windows.includes(win))
-                                      this.tiler.grabbedWindow = win; })
+                (_, win) => { if (this.tiler.windows.includes(win))
+                                  this.tiler.grabbedWindow = win; })
         );
         this._grabOpIds.push(
             global.display.connect('grab-op-end', () => this._onGrabEnd())
@@ -360,15 +348,8 @@ class Tiler {
                 if (index > -1) this._centerTimeoutIds.splice(index, 1);
 
                 if (!win || !win.get_display()) return GLib.SOURCE_REMOVE;
-		if (SHELL_MAJOR < 49) {
-                    if (win.get_maximized()) {
-                        win.unmaximize(Meta.MaximizeFlags.BOTH);
-                    }
-                } else {
-                    if (win.is_maximized()) {
-                        win.unmaximize();
-                    }
-                }
+                if (win.get_maximized())
+                    win.unmaximize(Meta.MaximizeFlags.BOTH);
 
                 const monitorIndex = win.get_monitor();
                 const workspace = this._workspaceManager.get_active_workspace();
@@ -385,12 +366,8 @@ class Tiler {
                 );
 
                 GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                    if (win.get_display()) {
-                        if (typeof win.set_keep_above === "function")
-                            win.set_keep_above(true);
-                        else if (typeof win.make_above === "function")
-                            win.make_above();
-                    }
+                    if (win.get_display())
+                        win.make_above();
                     return GLib.SOURCE_REMOVE;
                 });
                 return GLib.SOURCE_REMOVE;
@@ -568,6 +545,7 @@ class Tiler {
         if (windowsToTile.length === 0) return;
 
         const monitor = Main.layoutManager.primaryMonitor;
+        if (!monitor) return;
         const workspace = this._workspaceManager.get_active_workspace();
         const workArea = workspace.get_work_area_for_monitor(monitor.index);
 
@@ -578,15 +556,8 @@ class Tiler {
             height: workArea.height - 2 * this._outerGapVertical,
         };
         windowsToTile.forEach((win) => {
-            if (SHELL_MAJOR < 49) {
-                if (win.get_maximized()) {
-                    win.unmaximize(Meta.MaximizeFlags.BOTH);
-                }
-            } else {
-                if (win.is_maximized()) {
-                    win.unmaximize();
-                }
-            }
+            if (win.get_maximized())
+                win.unmaximize(Meta.MaximizeFlags.BOTH);
         });
         if (windowsToTile.length === 1) {
             windowsToTile[0].move_resize_frame(
