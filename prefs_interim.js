@@ -97,11 +97,18 @@ export default class SimpleTilingPrefs extends ExtensionPreferences {
         // ── EXCEPTIONS ─────────────────────────────────────────────
         const groupExceptions = new Adw.PreferencesGroup({
             title: 'Exceptions',
-            description: 'Apps excluded from tiling. Enter the WM_CLASS (X11) or App ID (Wayland). Values are matched case-insensitively.',
+            description: 'Apps excluded from tiling. To detect an app automatically: focus its window first, then click 🔍. Or type the WM_CLASS (X11) / App ID (Wayland) manually. Values are matched case-insensitively.',
         });
         page.add(groupExceptions);
 
         const addRow = new Adw.EntryRow({ title: 'Add exception…' });
+        const detectBtn = new Gtk.Button({
+            icon_name: 'edit-find-symbolic',
+            valign: Gtk.Align.CENTER,
+            css_classes: ['flat', 'circular'],
+            tooltip_text: 'Detect last focused window',
+        });
+        addRow.add_prefix(detectBtn);
         const addBtn = new Gtk.Button({
             icon_name: 'list-add-symbolic',
             valign: Gtk.Align.CENTER,
@@ -137,6 +144,12 @@ export default class SimpleTilingPrefs extends ExtensionPreferences {
 
         refreshExceptions();
         settings.connect('changed::exceptions', refreshExceptions);
+
+        detectBtn.connect('clicked', () => {
+            const appId   = settings.get_string('last-focused-app-id');
+            const wmClass = settings.get_string('last-focused-wm-class');
+            addRow.text = appId || wmClass;
+        });
 
         addBtn.connect('clicked', () => {
             const val = addRow.text.trim().toLowerCase();

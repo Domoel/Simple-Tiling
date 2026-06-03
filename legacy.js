@@ -351,6 +351,12 @@ class Tiler {
         });
         this._connectToWorkspace();
         this._interactionHandler.enable();
+
+        this._signalIds.set("focus-changed", {
+            object: global.display,
+            id: global.display.connect("notify::focus-window", () => this._onFocusChanged())
+        });
+
         this._signalIds.set("settings-changed", {
             object: this._settings,
             id: this._settings.connect("changed", (_s, key) => this._onSettingsChanged(key)),
@@ -401,6 +407,15 @@ class Tiler {
                 this._onWindowAdded(workspace, win);
         });
         this.queueTile();
+    }
+
+    _onFocusChanged() {
+        const win = global.display.get_focus_window();
+        if (!win || win.get_window_type() !== Meta.WindowType.NORMAL) return;
+        this._settings.set_string("last-focused-wm-class",
+            (win.get_wm_class() || "").toLowerCase());
+        this._settings.set_string("last-focused-app-id",
+            (win.get_gtk_application_id() || "").toLowerCase());
     }
 
     _loadExceptions() {

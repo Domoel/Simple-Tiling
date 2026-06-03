@@ -199,7 +199,7 @@ function buildPrefsWidget() {
     exceptFrame.add(exceptBox);
 
     const exceptDesc = new Gtk.Label({
-        label: 'Apps excluded from tiling. Enter the WM_CLASS (X11) or App ID (Wayland).',
+        label: 'Apps excluded from tiling. To detect an app automatically: focus its window first, then click 🔍. Or type the WM_CLASS (X11) / App ID (Wayland) manually.',
         halign: Gtk.Align.START,
         wrap: true,
         visible: true,
@@ -259,6 +259,8 @@ function buildPrefsWidget() {
         spacing: 6,
         visible: true,
     });
+    const detectBtn = new Gtk.Button({ visible: true, tooltip_text: 'Detect last focused window' });
+    detectBtn.set_image(new Gtk.Image({ icon_name: 'edit-find-symbolic', visible: true }));
     const addEntry = new Gtk.Entry({
         placeholder_text: 'Add exception…',
         hexpand: true,
@@ -266,6 +268,12 @@ function buildPrefsWidget() {
     });
     const addBtn = new Gtk.Button({ visible: true });
     addBtn.set_image(new Gtk.Image({ icon_name: 'list-add-symbolic', visible: true }));
+
+    detectBtn.connect('clicked', () => {
+        const appId   = settings.get_string('last-focused-app-id');
+        const wmClass = settings.get_string('last-focused-wm-class');
+        addEntry.set_text(appId || wmClass);
+    });
 
     const doAdd = () => {
         const val = addEntry.get_text().trim().toLowerCase();
@@ -277,6 +285,7 @@ function buildPrefsWidget() {
     };
     addBtn.connect('clicked', doAdd);
     addEntry.connect('activate', doAdd);
+    addBox.pack_start(detectBtn, false, false, 0);
     addBox.pack_start(addEntry, true, true, 0);
     addBox.pack_end(addBtn, false, false, 0);
     exceptBox.add(addBox);
