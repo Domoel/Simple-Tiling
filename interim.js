@@ -73,7 +73,9 @@ class InteractionHandler {
 
         this._bindAllShortcuts();
         this._settingsChangedId =
-            this._settings.connect('changed', () => this._onSettingsChanged());
+            this._settings.connect('changed', (_s, key) => {
+                if (key in KEYBINDINGS) this._onSettingsChanged();
+            });
 
         this._grabOpIds.push(
             global.display.connect('grab-op-begin',
@@ -280,7 +282,7 @@ class Tiler {
 
         this._signalIds.set('settings-changed', {
             object: this.settings,
-            id: this.settings.connect('changed', ()=>this._onSettingsChanged())
+            id: this.settings.connect('changed', (_s, key) => this._onSettingsChanged(key))
         });
     }
 
@@ -302,11 +304,29 @@ class Tiler {
         this.windows = [];
     }
 
-    _onSettingsChanged() {
+    _onSettingsChanged(key) {
         this._innerGap           = this.settings.get_int('inner-gap');
         this._outerGapVertical   = this.settings.get_int('outer-gap-vertical');
         this._outerGapHorizontal = this.settings.get_int('outer-gap-horizontal');
         this._exceptions         = this.settings.get_strv('exceptions').map(e => e.toLowerCase());
+        if (key === 'exceptions')
+            this._reEvaluateExceptions();
+        else
+            this.queueTile();
+    }
+
+    _reEvaluateExceptions() {
+        const workspace = this._workspaceManager.get_active_workspace();
+        this.windows.slice().forEach(win => {
+            if (this._isException(win)) {
+                this._onWindowRemoved(null, win);
+                this._centerWindow(win);
+            }
+        });
+        workspace.list_windows().forEach(win => {
+            if (!this.windows.includes(win) && this._isTileable(win))
+                this._onWindowAdded(workspace, win);
+        });
         this.queueTile();
     }
 
@@ -384,20 +404,18 @@ class Tiler {
             } else {
                 this.windows.push(win);
             }
-            const id = win.get_id();
-            this._signalIds.set(`unmanaged-${id}`, {
+            const winId = win.get_id();
+            this._signalIds.set(`unmanaged-${winId}`, {
                 object: win,
-                id: win.connect("unmanaged", () =>
-                    this._onWindowRemoved(null, win)
-                ),
+                id: win.connect("unmanaged", () => this._onWindowRemoved(null, win, winId)),
             });
-            this._signalIds.set(`size-changed-${id}`, {
+            this._signalIds.set(`size-changed-${winId}`, {
                 object: win,
                 id: win.connect("size-changed", () => {
                     if (!this.grabbedWindow) this.queueTile();
                 }),
             });
-            this._signalIds.set(`minimized-${id}`, {
+            this._signalIds.set(`minimized-${winId}`, {
                 object: win,
                 id: win.connect("notify::minimized", () =>
                     this._onWindowMinimizedStateChanged()
@@ -407,17 +425,20 @@ class Tiler {
         }
     }
 
-    _onWindowRemoved(workspace, win) {
+    _onWindowRemoved(workspace, win, capturedId = null) {
         const index = this.windows.indexOf(win);
         if (index > -1) this.windows.splice(index, 1);
 
+        let winId = capturedId;
+        if (winId === null) {
+            try { winId = win.get_id(); } catch { this.queueTile(); return; }
+        }
+
         ["unmanaged", "size-changed", "minimized"].forEach((prefix) => {
-            const key = `${prefix}-${win.get_id()}`;
+            const key = `${prefix}-${winId}`;
             if (this._signalIds.has(key)) {
                 const { object, id } = this._signalIds.get(key);
-                try {
-                    object.disconnect(id);
-                } catch (e) {}
+                try { object.disconnect(id); } catch {}
                 this._signalIds.delete(key);
             }
         });
@@ -450,13 +471,24 @@ class Tiler {
     }
 
     _disconnectFromWorkspace() {
-        this.windows.slice().forEach((win) => this._onWindowRemoved(null, win));
+        for (const win of this.windows) {
+            let winId;
+            try { winId = win.get_id(); } catch { continue; }
+            ["unmanaged", "size-changed", "minimized"].forEach(prefix => {
+                const key = `${prefix}-${winId}`;
+                if (this._signalIds.has(key)) {
+                    const { object, id } = this._signalIds.get(key);
+                    try { object.disconnect(id); } catch {}
+                    this._signalIds.delete(key);
+                }
+            });
+        }
+        this.windows = [];
+
         ["window-added", "window-removed"].forEach((key) => {
             if (this._signalIds.has(key)) {
                 const { object, id } = this._signalIds.get(key);
-                try {
-                    object.disconnect(id);
-                } catch (e) {}
+                try { object.disconnect(id); } catch {}
                 this._signalIds.delete(key);
             }
         });
