@@ -6,25 +6,26 @@
 'use strict';
 
 // ── GLOBAL IMPORTS ────────────────────────────────────────
-const { Adw, Gio, Gtk, GLib } = imports.gi;
+const { Adw, Gio, Gtk } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
-const _ = ExtensionUtils.gettext;
 
 
-function init() {
-}
+function init() {}
 
 function buildPrefsWidget() {
     const settings = ExtensionUtils.getSettings();
     const page = new Adw.PreferencesPage();
 
     // ── WINDOW GAPS ────────────────────────────────────────────
-    const groupGaps = new Adw.PreferencesGroup({ title: 'Window Gaps' });
+    const groupGaps = new Adw.PreferencesGroup({
+        title: 'Window Gaps',
+        description: 'Adjust spacing between windows and screen edges.',
+    });
     page.add(groupGaps);
 
     const rowInnerGap = new Adw.SpinRow({
         title: 'Inner Gap',
-        subtitle: 'The gap between windows in pixels.',
+        subtitle: 'Space between tiled windows (pixels)',
         adjustment: new Gtk.Adjustment({ lower: 0, upper: 100, step_increment: 1 }),
     });
     groupGaps.add(rowInnerGap);
@@ -50,6 +51,14 @@ function buildPrefsWidget() {
     const groupBehavior = new Adw.PreferencesGroup({ title: 'Window Behavior' });
     page.add(groupBehavior);
 
+    const rowMasterRatio = new Adw.SpinRow({
+        title: 'Master Window Width',
+        subtitle: 'Percentage of the work area (20–80 %)',
+        adjustment: new Gtk.Adjustment({ lower: 20, upper: 80, step_increment: 5 }),
+    });
+    groupBehavior.add(rowMasterRatio);
+    settings.bind('master-ratio', rowMasterRatio, 'value', Gio.SettingsBindFlags.DEFAULT);
+
     const rowNewWindow = new Adw.ComboRow({
         title: 'Open new windows as',
         subtitle: 'Whether a new window starts as Master or Stack',
@@ -61,10 +70,8 @@ function buildPrefsWidget() {
 
     const currentBehavior = settings.get_string('new-window-behavior');
     rowNewWindow.selected = currentBehavior === 'master' ? 1 : 0;
-
     rowNewWindow.connect('notify::selected', () => {
-        const newVal = rowNewWindow.selected === 1 ? 'master' : 'stack';
-        settings.set_string('new-window-behavior', newVal);
+        settings.set_string('new-window-behavior', rowNewWindow.selected === 1 ? 'master' : 'stack');
     });
 
     // ── KEYBINDINGS ────────────────────────────────────────────
@@ -86,6 +93,59 @@ function buildPrefsWidget() {
     });
     rowKeys.add_suffix(btnOpenKeyboard);
     rowKeys.set_activatable_widget(btnOpenKeyboard);
+
+    // ── EXCEPTIONS ─────────────────────────────────────────────
+    const groupExceptions = new Adw.PreferencesGroup({
+        title: 'Exceptions',
+        description: 'Apps excluded from tiling. Enter the WM_CLASS (X11) or App ID (Wayland). Values are matched case-insensitively.',
+    });
+    page.add(groupExceptions);
+
+    const addRow = new Adw.EntryRow({ title: 'Add exception…' });
+    const addBtn = new Gtk.Button({
+        icon_name: 'list-add-symbolic',
+        valign: Gtk.Align.CENTER,
+        css_classes: ['flat', 'circular'],
+    });
+    addRow.add_suffix(addBtn);
+
+    const exceptionRows = [];
+
+    const refreshExceptions = () => {
+        exceptionRows.forEach(r => groupExceptions.remove(r));
+        exceptionRows.length = 0;
+        groupExceptions.remove(addRow);
+
+        for (const exc of settings.get_strv('exceptions')) {
+            const row = new Adw.ActionRow({ title: exc });
+            const btn = new Gtk.Button({
+                icon_name: 'list-remove-symbolic',
+                valign: Gtk.Align.CENTER,
+                css_classes: ['flat', 'circular'],
+            });
+            btn.connect('clicked', () => {
+                settings.set_strv('exceptions',
+                    settings.get_strv('exceptions').filter(e => e !== exc));
+            });
+            row.add_suffix(btn);
+            groupExceptions.add(row);
+            exceptionRows.push(row);
+        }
+
+        groupExceptions.add(addRow);
+    };
+
+    refreshExceptions();
+    settings.connect('changed::exceptions', refreshExceptions);
+
+    addBtn.connect('clicked', () => {
+        const val = addRow.text.trim().toLowerCase();
+        if (!val) return;
+        const current = settings.get_strv('exceptions');
+        if (!current.includes(val))
+            settings.set_strv('exceptions', [...current, val]);
+        addRow.text = '';
+    });
 
     return page;
 }

@@ -8,7 +8,6 @@
 const { Meta, Shell, Gio, GLib, Clutter } = imports.gi;
 const Main = imports.ui.main;
 const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
 
 // ── CONST ────────────────────────────────────────────
 const WM_SCHEMA          = 'org.gnome.desktop.wm.keybindings';
@@ -26,25 +25,25 @@ const KEYBINDINGS = {
     'focus-right':        (self) => self._focusInDirection('right'),
     'focus-up':           (self) => self._focusInDirection('up'),
     'focus-down':         (self) => self._focusInDirection('down'),
+    'toggle-tiling':      (self) => self.tiler._toggleTiling(),
+    'float-window':       (self) => self.tiler._floatFocused(),
+    'toggle-monocle':     (self) => self.tiler._toggleMonocle(),
+    'monocle-next':       (self) => self.tiler._monocleNext(),
+    'monocle-prev':       (self) => self.tiler._monoclePrev(),
 };
 
-// ── HELPER‑FUNCTION ────────────────────────────────────────
+// ── HELPER FUNCTION ────────────────────────────────────────
 function getPointerXY() {
     if (global.get_pointer) {
         const [x, y] = global.get_pointer();
         return [x, y];
     }
-
     const ev = Clutter.get_current_event();
     if (ev) {
         const coords = ev.get_coords();
-        if (Array.isArray(coords)) 
-            return coords;
+        if (Array.isArray(coords)) return coords;
     }
-
-    const device = Clutter.get_default_backend()
-                          .get_default_seat()
-                          .get_pointer();
+    const device = Clutter.get_default_backend().get_default_seat().get_pointer();
     return device ? device.get_position() : [0, 0];
 }
 
@@ -54,7 +53,6 @@ class InteractionHandler {
         this.tiler              = tiler;
         this._settings          = this.tiler.settings;
         this._wmSettings        = new Gio.Settings({ schema: WM_SCHEMA });
-
         this._wmKeysToDisable   = [];
         this._savedWmShortcuts  = {};
         this._grabOpIds         = [];
@@ -70,12 +68,14 @@ class InteractionHandler {
 
         this._bindAllShortcuts();
         this._settingsChangedId =
-            this._settings.connect('changed', () => this._onSettingsChanged());
+            this._settings.connect('changed', (_s, key) => {
+                if (key in KEYBINDINGS) this._onSettingsChanged();
+            });
 
         this._grabOpIds.push(
             global.display.connect('grab-op-begin',
-                (_, __, win) => { if (this.tiler.windows.includes(win))
-                                      this.tiler.grabbedWindow = win; })
+                (_, win) => { if (this.tiler.windows.includes(win))
+                                  this.tiler.grabbedWindow = win; })
         );
         this._grabOpIds.push(
             global.display.connect('grab-op-end', () => this._onGrabEnd())
@@ -107,8 +107,8 @@ class InteractionHandler {
         );
     }
 
-    _bindAllShortcuts()  { for (const [k,h] of Object.entries(KEYBINDINGS)) this._bind(k, h); }
-    _unbindAllShortcuts(){ for (const k in KEYBINDINGS) Main.wm.removeKeybinding(k); }
+    _bindAllShortcuts()   { for (const [k, h] of Object.entries(KEYBINDINGS)) this._bind(k, h); }
+    _unbindAllShortcuts() { for (const k in KEYBINDINGS) Main.wm.removeKeybinding(k); }
 
     _onSettingsChanged() {
         this._unbindAllShortcuts();
@@ -118,27 +118,17 @@ class InteractionHandler {
     _prepareWmShortcuts() {
         const schema = this._wmSettings.settings_schema;
         if (!schema) return;
-
         const keys = [];
-
         const add = key => { if (schema.has_key(key)) keys.push(key); };
-
         if (schema.has_key('toggle-tiled-left'))
             keys.push('toggle-tiled-left', 'toggle-tiled-right');
-        else {
-            add('tile-left');  add('tile-right');
-        }
-
+        else { add('tile-left'); add('tile-right'); }
         if (schema.has_key('toggle-maximized'))
             keys.push('toggle-maximized');
-        else {
-            add('maximize');   add('unmaximize');
-        }
-
+        else { add('maximize'); add('unmaximize'); }
         if (keys.length) {
             this._wmKeysToDisable = keys;
-            keys.forEach(k => this._savedWmShortcuts[k] =
-                             this._wmSettings.get_value(k));
+            keys.forEach(k => this._savedWmShortcuts[k] = this._wmSettings.get_value(k));
         }
     }
 
@@ -166,7 +156,7 @@ class InteractionHandler {
         if (!src || !this.tiler.windows.includes(src)) return;
         let tgt = null;
         const idx = this.tiler.windows.indexOf(src);
-        if (idx === 0 && direction==='right' && this.tiler.windows.length>1)
+        if (idx === 0 && direction === 'right' && this.tiler.windows.length > 1)
             tgt = this.tiler.windows[1];
         else
             tgt = this._findTargetInDirection(src, direction);
@@ -179,23 +169,22 @@ class InteractionHandler {
     }
 
     _findTargetInDirection(src, dir) {
-        const sRect = src.get_frame_rect(), cand=[];
+        const sRect = src.get_frame_rect(), cand = [];
         for (const win of this.tiler.windows) {
-            if (win===src) continue;
-            const r=win.get_frame_rect();
-            if (dir==='left' && r.x<sRect.x)  cand.push(win);
-            if (dir==='right'&& r.x>sRect.x)  cand.push(win);
-            if (dir==='up'   && r.y<sRect.y)  cand.push(win);
-            if (dir==='down' && r.y>sRect.y)  cand.push(win);
+            if (win === src) continue;
+            const r = win.get_frame_rect();
+            if (dir === 'left'  && r.x < sRect.x) cand.push(win);
+            if (dir === 'right' && r.x > sRect.x) cand.push(win);
+            if (dir === 'up'    && r.y < sRect.y) cand.push(win);
+            if (dir === 'down'  && r.y > sRect.y) cand.push(win);
         }
         if (!cand.length) return null;
-        let best=null, min=Infinity;
+        let best = null, min = Infinity;
         for (const w of cand) {
-            const r=w.get_frame_rect();
-            const dev = (dir==='left'||dir==='right')
-                       ? Math.abs(sRect.y - r.y)
-                       : Math.abs(sRect.x - r.x);
-            if (dev<min){min=dev; best=w;}
+            const r = w.get_frame_rect();
+            const dev = (dir === 'left' || dir === 'right')
+                ? Math.abs(sRect.y - r.y) : Math.abs(sRect.x - r.x);
+            if (dev < min) { min = dev; best = w; }
         }
         return best;
     }
@@ -215,23 +204,24 @@ class InteractionHandler {
     }
 
     _findTargetUnderPointer(exclude) {
-        const [x,y] = getPointerXY();
+        const [x, y] = getPointerXY();
         const wins = global.get_window_actors()
-                           .map(a=>a.meta_window)
-                           .filter(w=>w && w!==exclude &&
-                                      this.tiler.windows.includes(w) && (()=>{const f=w.get_frame_rect();
-                                           return x>=f.x && x<f.x+f.width &&
-                                                  y>=f.y && y<f.y+f.height;})());
-        if (wins.length) return wins[wins.length-1];
+            .map(a => a.meta_window)
+            .filter(w => w && w !== exclude && this.tiler.windows.includes(w) && (() => {
+                const f = w.get_frame_rect();
+                return x >= f.x && x < f.x + f.width && y >= f.y && y < f.y + f.height;
+            })());
+        if (wins.length) return wins[wins.length - 1];
 
-        let best=null, max=0, sRect=exclude.get_frame_rect();
+        let best = null, max = 0;
+        const sRect = exclude.get_frame_rect();
         for (const w of this.tiler.windows) {
-            if (w===exclude) continue;
-            const r=w.get_frame_rect();
-            const ovX=Math.max(0, Math.min(sRect.x+sRect.width, r.x+r.width)-Math.max(sRect.x,r.x));
-            const ovY=Math.max(0, Math.min(sRect.y+sRect.height,r.y+r.height)-Math.max(sRect.y,r.y));
-            const area=ovX*ovY;
-            if (area>max){max=area; best=w;}
+            if (w === exclude) continue;
+            const r = w.get_frame_rect();
+            const ovX = Math.max(0, Math.min(sRect.x + sRect.width, r.x + r.width) - Math.max(sRect.x, r.x));
+            const ovY = Math.max(0, Math.min(sRect.y + sRect.height, r.y + r.height) - Math.max(sRect.y, r.y));
+            const area = ovX * ovY;
+            if (area > max) { max = area; best = w; }
         }
         return best;
     }
@@ -240,26 +230,30 @@ class InteractionHandler {
 // ── TILER ────────────────────────────────────────────────
 class Tiler {
     constructor(extension) {
-        this._extension       = extension;
-        this.settings         = this._extension.getSettings();
+        this._extension          = extension;
+        this.settings            = this._extension.getSettings();
 
-        this.windows          = [];
-        this.grabbedWindow    = null;
-        this._signalIds       = new Map();
-        this._tileInProgress  = false;
+        this.windows             = [];
+        this.grabbedWindow       = null;
+        this._signalIds          = new Map();
+        this._tileInProgress     = false;
 
-        this._innerGap        = this.settings.get_int('inner-gap');
-        this._outerGapVertical= this.settings.get_int('outer-gap-vertical');
+        this._innerGap           = this.settings.get_int('inner-gap');
+        this._outerGapVertical   = this.settings.get_int('outer-gap-vertical');
         this._outerGapHorizontal = this.settings.get_int('outer-gap-horizontal');
+        this._masterRatio        = this.settings.get_int('master-ratio');
 
-        this._tilingDelay     = TILING_DELAY_MS;
-        this._centeringDelay  = CENTERING_DELAY_MS;
+        this._tilingDelay        = TILING_DELAY_MS;
+        this._centeringDelay     = CENTERING_DELAY_MS;
 
-        this._exceptions      = [];
+        this._exceptions         = [];
+        this._floatedWindows     = new Set();
+        this._tilingEnabled      = true;
+        this._monocleEnabled     = false;
         this._interactionHandler = new InteractionHandler(this);
 
-        this._tileTimeoutId   = null;
-        this._centerTimeoutIds= [];
+        this._tileTimeoutId      = null;
+        this._centerTimeoutIds   = [];
     }
 
     enable() {
@@ -269,7 +263,7 @@ class Tiler {
         this._signalIds.set('workspace-changed', {
             object: this._workspaceManager,
             id: this._workspaceManager.connect('active-workspace-changed',
-                                               ()=>this._onActiveWorkspaceChanged())
+                () => this._onActiveWorkspaceChanged())
         });
 
         this._connectToWorkspace();
@@ -277,7 +271,7 @@ class Tiler {
 
         this._signalIds.set('settings-changed', {
             object: this.settings,
-            id: this.settings.connect('changed', ()=>this._onSettingsChanged())
+            id: this.settings.connect('changed', (_s, key) => this._onSettingsChanged(key))
         });
     }
 
@@ -286,44 +280,55 @@ class Tiler {
             GLib.source_remove(this._tileTimeoutId);
             this._tileTimeoutId = null;
         }
-        this._centerTimeoutIds.forEach(id=>GLib.source_remove(id));
+        this._centerTimeoutIds.forEach(id => GLib.source_remove(id));
         this._centerTimeoutIds = [];
 
         this._interactionHandler.disable();
         this._disconnectFromWorkspace();
 
-        for (const [,sig] of this._signalIds) {
+        for (const [, sig] of this._signalIds) {
             try { sig.object.disconnect(sig.id); } catch {}
         }
         this._signalIds.clear();
         this.windows = [];
     }
 
-    _onSettingsChanged() {
-        this._innerGap          = this.settings.get_int('inner-gap');
-        this._outerGapVertical  = this.settings.get_int('outer-gap-vertical');
-        this._outerGapHorizontal= this.settings.get_int('outer-gap-horizontal');
+    _onSettingsChanged(key) {
+        this._innerGap           = this.settings.get_int('inner-gap');
+        this._outerGapVertical   = this.settings.get_int('outer-gap-vertical');
+        this._outerGapHorizontal = this.settings.get_int('outer-gap-horizontal');
+        this._masterRatio        = this.settings.get_int('master-ratio');
+        this._exceptions         = this.settings.get_strv('exceptions').map(e => e.toLowerCase());
+        if (key === 'exceptions')
+            this._reEvaluateExceptions();
+        else
+            this.queueTile();
+    }
+
+    _reEvaluateExceptions() {
+        const workspace = this._workspaceManager.get_active_workspace();
+        this.windows.slice().forEach(win => {
+            if (this._isException(win)) {
+                this._onWindowRemoved(null, win);
+                this._centerWindow(win);
+            }
+        });
+        workspace.list_windows().forEach(win => {
+            if (!this.windows.includes(win) && this._isTileable(win))
+                this._onWindowAdded(workspace, win);
+        });
         this.queueTile();
     }
 
     _loadExceptions() {
-        const file = Gio.File.new_for_path(this._extension.path + '/exceptions.txt');
-        if (!file.query_exists(null)) { this._exceptions=[]; return; }
-
-        const [ok,data] = file.load_contents(null);
-        if (!ok) { this._exceptions=[]; return; }
-
-        const txt = new TextDecoder('utf-8').decode(data);
-        this._exceptions = txt.split('\n')
-                              .map(l=>l.trim())
-                              .filter(l=>l && !l.startsWith('#'))
-                              .map(l=>l.toLowerCase());
+        this._exceptions = this.settings.get_strv('exceptions')
+            .map(e => e.toLowerCase());
     }
 
     _isException(win) {
         if (!win) return false;
-        const wmClass = (win.get_wm_class() || "").toLowerCase();
-        const appId = (win.get_gtk_application_id() || "").toLowerCase();
+        const wmClass = (win.get_wm_class() || '').toLowerCase();
+        const appId   = (win.get_gtk_application_id() || '').toLowerCase();
         return this._exceptions.includes(wmClass) || this._exceptions.includes(appId);
     }
 
@@ -331,49 +336,38 @@ class Tiler {
         return (
             win &&
             !win.minimized &&
+            !win.skip_taskbar &&
             !this._isException(win) &&
+            !this._floatedWindows.has(win) &&
             win.get_window_type() === Meta.WindowType.NORMAL
         );
     }
 
     _centerWindow(win) {
-        const timeoutId = GLib.timeout_add(
-            GLib.PRIORITY_DEFAULT,
-            this._centeringDelay,
-            () => {
-                const index = this._centerTimeoutIds.indexOf(timeoutId);
-                if (index > -1) this._centerTimeoutIds.splice(index, 1);
+        const timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, this._centeringDelay, () => {
+            const index = this._centerTimeoutIds.indexOf(timeoutId);
+            if (index > -1) this._centerTimeoutIds.splice(index, 1);
 
-                if (!win || !win.get_display()) return GLib.SOURCE_REMOVE;
-                if (win.get_maximized())
-                    win.unmaximize(Meta.MaximizeFlags.BOTH);
+            if (!win || !win.get_display()) return GLib.SOURCE_REMOVE;
+            if (win.get_maximized()) win.unmaximize(Meta.MaximizeFlags.BOTH);
 
-                const monitorIndex = win.get_monitor();
-                const workspace = this._workspaceManager.get_active_workspace();
-                const workArea = workspace.get_work_area_for_monitor(
-                    monitorIndex
-                );
+            const monitorIndex = win.get_monitor();
+            const workspace    = this._workspaceManager.get_active_workspace();
+            const workArea     = workspace.get_work_area_for_monitor(monitorIndex);
+            const frame        = win.get_frame_rect();
 
-                const frame = win.get_frame_rect();
-                win.move_frame(
-                    true,
-                    workArea.x + Math.floor((workArea.width - frame.width) / 2),
-                    workArea.y +
-                        Math.floor((workArea.height - frame.height) / 2)
-                );
+            win.move_frame(
+                true,
+                workArea.x + Math.floor((workArea.width  - frame.width)  / 2),
+                workArea.y + Math.floor((workArea.height - frame.height) / 2)
+            );
 
-                GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                    if (win.get_display()) {
-                        if (typeof win.set_keep_above === "function")
-                            win.set_keep_above(true);
-                        else if (typeof win.make_above === "function")
-                            win.make_above();
-                    }
-                    return GLib.SOURCE_REMOVE;
-                });
+            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                if (win.get_display()) win.make_above();
                 return GLib.SOURCE_REMOVE;
-            }
-        );
+            });
+            return GLib.SOURCE_REMOVE;
+        });
         this._centerTimeoutIds.push(timeoutId);
     }
 
@@ -382,51 +376,52 @@ class Tiler {
     }
 
     _onWindowAdded(workspace, win) {
+        if (!this._tilingEnabled) return;
         if (this.windows.includes(win)) return;
         if (this._isException(win)) {
             this._centerWindow(win);
             return;
         }
         if (this._isTileable(win)) {
-            if (this.settings.get_string("new-window-behavior") === "master") {
+            if (this.settings.get_string('new-window-behavior') === 'master')
                 this.windows.unshift(win);
-            } else {
+            else
                 this.windows.push(win);
-            }
-            const id = win.get_id();
-            this._signalIds.set(`unmanaged-${id}`, {
+
+            const winId = win.get_id();
+            this._signalIds.set(`unmanaged-${winId}`, {
                 object: win,
-                id: win.connect("unmanaged", () =>
-                    this._onWindowRemoved(null, win)
-                ),
+                id: win.connect('unmanaged', () => this._onWindowRemoved(null, win, winId)),
             });
-            this._signalIds.set(`size-changed-${id}`, {
+            this._signalIds.set(`size-changed-${winId}`, {
                 object: win,
-                id: win.connect("size-changed", () => {
+                id: win.connect('size-changed', () => {
                     if (!this.grabbedWindow) this.queueTile();
                 }),
             });
-            this._signalIds.set(`minimized-${id}`, {
+            this._signalIds.set(`minimized-${winId}`, {
                 object: win,
-                id: win.connect("notify::minimized", () =>
-                    this._onWindowMinimizedStateChanged()
-                ),
+                id: win.connect('notify::minimized', () => this._onWindowMinimizedStateChanged()),
             });
             this.queueTile();
         }
     }
 
-    _onWindowRemoved(workspace, win) {
+    _onWindowRemoved(workspace, win, capturedId = null) {
+        this._floatedWindows.delete(win);
         const index = this.windows.indexOf(win);
         if (index > -1) this.windows.splice(index, 1);
 
-        ["unmanaged", "size-changed", "minimized"].forEach((prefix) => {
-            const key = `${prefix}-${win.get_id()}`;
+        let winId = capturedId;
+        if (winId === null) {
+            try { winId = win.get_id(); } catch { this.queueTile(); return; }
+        }
+
+        ['unmanaged', 'size-changed', 'minimized'].forEach(prefix => {
+            const key = `${prefix}-${winId}`;
             if (this._signalIds.has(key)) {
                 const { object, id } = this._signalIds.get(key);
-                try {
-                    object.disconnect(id);
-                } catch (e) {}
+                try { object.disconnect(id); } catch {}
                 this._signalIds.delete(key);
             }
         });
@@ -440,159 +435,219 @@ class Tiler {
 
     _connectToWorkspace() {
         const workspace = this._workspaceManager.get_active_workspace();
-        workspace
-            .list_windows()
-            .forEach((win) => this._onWindowAdded(workspace, win));
-        this._signalIds.set("window-added", {
+        workspace.list_windows().forEach(win => this._onWindowAdded(workspace, win));
+        this._signalIds.set('window-added', {
             object: workspace,
-            id: workspace.connect("window-added", (ws, win) =>
-                this._onWindowAdded(ws, win)
-            ),
+            id: workspace.connect('window-added', (ws, win) => this._onWindowAdded(ws, win)),
         });
-        this._signalIds.set("window-removed", {
+        this._signalIds.set('window-removed', {
             object: workspace,
-            id: workspace.connect("window-removed", (ws, win) =>
-                this._onWindowRemoved(ws, win)
-            ),
+            id: workspace.connect('window-removed', (ws, win) => this._onWindowRemoved(ws, win)),
         });
         this.queueTile();
     }
 
     _disconnectFromWorkspace() {
-        this.windows.slice().forEach((win) => this._onWindowRemoved(null, win));
-        ["window-added", "window-removed"].forEach((key) => {
+        this._floatedWindows.clear();
+        for (const win of this.windows) {
+            let winId;
+            try { winId = win.get_id(); } catch { continue; }
+            ['unmanaged', 'size-changed', 'minimized'].forEach(prefix => {
+                const key = `${prefix}-${winId}`;
+                if (this._signalIds.has(key)) {
+                    const { object, id } = this._signalIds.get(key);
+                    try { object.disconnect(id); } catch {}
+                    this._signalIds.delete(key);
+                }
+            });
+        }
+        this.windows = [];
+
+        ['window-added', 'window-removed'].forEach(key => {
             if (this._signalIds.has(key)) {
                 const { object, id } = this._signalIds.get(key);
-                try {
-                    object.disconnect(id);
-                } catch (e) {}
+                try { object.disconnect(id); } catch {}
                 this._signalIds.delete(key);
             }
         });
     }
 
     queueTile() {
-        if (this._tileInProgress || this._tileTimeoutId) return;
+        if (!this._tilingEnabled || this._tileInProgress || this._tileTimeoutId) return;
         this._tileInProgress = true;
-        this._tileTimeoutId = GLib.timeout_add(
-            GLib.PRIORITY_DEFAULT,
-            this._tilingDelay,
-            () => {
-                this._tileWindows();
-                this._tileInProgress = false;
-                this._tileTimeoutId = null;
-                return GLib.SOURCE_REMOVE;
-            }
-        );
+        this._tileTimeoutId  = GLib.timeout_add(GLib.PRIORITY_DEFAULT, this._tilingDelay, () => {
+            this._tileWindows();
+            this._tileInProgress = false;
+            this._tileTimeoutId  = null;
+            return GLib.SOURCE_REMOVE;
+        });
     }
 
     tileNow() {
-        if (!this._tileInProgress) {
-            this._tileWindows();
-        }
+        if (!this._tileInProgress) this._tileWindows();
     }
 
     _splitLayout(windows, area) {
         if (windows.length === 0) return;
         if (windows.length === 1) {
-            windows[0].move_resize_frame(
-                true,
-                area.x,
-                area.y,
-                area.width,
-                area.height
-            );
+            windows[0].move_resize_frame(true, area.x, area.y, area.width, area.height);
             return;
         }
         const gap = Math.floor(this._innerGap / 2);
-        const primaryWindows = [windows[0]];
+        const primaryWindows   = [windows[0]];
         const secondaryWindows = windows.slice(1);
         let primaryArea, secondaryArea;
         if (area.width > area.height) {
-            const primaryWidth = Math.floor(area.width / 2) - gap;
-            primaryArea = {
-                x: area.x,
-                y: area.y,
-                width: primaryWidth,
-                height: area.height,
-            };
-            secondaryArea = {
-                x: area.x + primaryWidth + this._innerGap,
-                y: area.y,
-                width: area.width - primaryWidth - this._innerGap,
-                height: area.height,
-            };
+            const w = Math.floor(area.width / 2) - gap;
+            primaryArea   = { x: area.x, y: area.y, width: w, height: area.height };
+            secondaryArea = { x: area.x + w + this._innerGap, y: area.y,
+                              width: area.width - w - this._innerGap, height: area.height };
         } else {
-            const primaryHeight = Math.floor(area.height / 2) - gap;
-            primaryArea = {
-                x: area.x,
-                y: area.y,
-                width: area.width,
-                height: primaryHeight,
-            };
-            secondaryArea = {
-                x: area.x,
-                y: area.y + primaryHeight + this._innerGap,
-                width: area.width,
-                height: area.height - primaryHeight - this._innerGap,
-            };
+            const h = Math.floor(area.height / 2) - gap;
+            primaryArea   = { x: area.x, y: area.y, width: area.width, height: h };
+            secondaryArea = { x: area.x, y: area.y + h + this._innerGap,
+                              width: area.width, height: area.height - h - this._innerGap };
         }
         this._splitLayout(primaryWindows, primaryArea);
         this._splitLayout(secondaryWindows, secondaryArea);
     }
 
     _tileWindows() {
-        const windowsToTile = this.windows.filter((win) => !win.minimized);
+        const windowsToTile = this.windows.filter(win => !win.minimized);
         if (windowsToTile.length === 0) return;
 
-        const monitor = Main.layoutManager.primaryMonitor;
         const workspace = this._workspaceManager.get_active_workspace();
-        const workArea = workspace.get_work_area_for_monitor(monitor.index);
 
-        const innerArea = {
-            x: workArea.x + this._outerGapHorizontal,
-            y: workArea.y + this._outerGapVertical,
-            width: workArea.width - 2 * this._outerGapHorizontal,
-            height: workArea.height - 2 * this._outerGapVertical,
-        };
-        windowsToTile.forEach((win) => {
-            if (win.get_maximized()) win.unmaximize(Meta.MaximizeFlags.BOTH);
-        });
-        if (windowsToTile.length === 1) {
-            windowsToTile[0].move_resize_frame(
-                true,
-                innerArea.x,
-                innerArea.y,
-                innerArea.width,
-                innerArea.height
-            );
-            return;
+        // Group windows by monitor, preserving global ordering within each group.
+        const byMonitor = new Map();
+        for (const win of windowsToTile) {
+            const idx = win.get_monitor();
+            if (!byMonitor.has(idx)) byMonitor.set(idx, []);
+            byMonitor.get(idx).push(win);
         }
-        const gap = Math.floor(this._innerGap / 2);
-        const masterWidth = Math.floor(innerArea.width / 2) - gap;
-        const master = windowsToTile[0];
-        master.move_resize_frame(
-            true,
-            innerArea.x,
-            innerArea.y,
-            masterWidth,
-            innerArea.height
-        );
-        const stackArea = {
-            x: innerArea.x + masterWidth + this._innerGap,
-            y: innerArea.y,
-            width: innerArea.width - masterWidth - this._innerGap,
-            height: innerArea.height,
-        };
-        this._splitLayout(windowsToTile.slice(1), stackArea);
+
+        for (const [monitorIdx, wins] of byMonitor) {
+            const workArea  = workspace.get_work_area_for_monitor(monitorIdx);
+            const innerArea = {
+                x:      workArea.x + this._outerGapHorizontal,
+                y:      workArea.y + this._outerGapVertical,
+                width:  workArea.width  - 2 * this._outerGapHorizontal,
+                height: workArea.height - 2 * this._outerGapVertical,
+            };
+
+            wins.forEach(win => {
+                if (win.get_maximized()) win.unmaximize(Meta.MaximizeFlags.BOTH);
+            });
+
+            if (this._monocleEnabled) {
+                wins.forEach(win =>
+                    win.move_resize_frame(true, innerArea.x, innerArea.y,
+                                         innerArea.width, innerArea.height));
+                continue;
+            }
+
+            if (wins.length === 1) {
+                wins[0].move_resize_frame(true, innerArea.x, innerArea.y,
+                                          innerArea.width, innerArea.height);
+                continue;
+            }
+
+            const gap         = Math.floor(this._innerGap / 2);
+            const masterWidth = Math.floor(innerArea.width * this._masterRatio / 100) - gap;
+            wins[0].move_resize_frame(true, innerArea.x, innerArea.y, masterWidth, innerArea.height);
+            const stackArea = {
+                x:      innerArea.x + masterWidth + this._innerGap,
+                y:      innerArea.y,
+                width:  innerArea.width  - masterWidth - this._innerGap,
+                height: innerArea.height,
+            };
+            this._splitLayout(wins.slice(1), stackArea);
+        }
+    }
+
+    _toggleTiling() {
+        this._tilingEnabled = !this._tilingEnabled;
+        if (this._tilingEnabled) {
+            const workspace = this._workspaceManager.get_active_workspace();
+            workspace.list_windows().forEach(win => this._onWindowAdded(workspace, win));
+        } else {
+            this._monocleEnabled = false;
+            for (const win of this.windows) {
+                let winId;
+                try { winId = win.get_id(); } catch { continue; }
+                ['unmanaged', 'size-changed', 'minimized'].forEach(prefix => {
+                    const key = `${prefix}-${winId}`;
+                    if (this._signalIds.has(key)) {
+                        const { object, id } = this._signalIds.get(key);
+                        try { object.disconnect(id); } catch {}
+                        this._signalIds.delete(key);
+                    }
+                });
+            }
+            this.windows = [];
+            this._floatedWindows.clear();
+        }
+    }
+
+    _floatFocused() {
+        const win = global.display.get_focus_window();
+        if (!win) return;
+        if (this._floatedWindows.has(win)) {
+            this._floatedWindows.delete(win);
+            if (this._isTileable(win)) {
+                const ws = this._workspaceManager.get_active_workspace();
+                this._onWindowAdded(ws, win);
+            }
+        } else if (this.windows.includes(win)) {
+            this.windows.splice(this.windows.indexOf(win), 1);
+            this._floatedWindows.add(win);
+            let winId;
+            try { winId = win.get_id(); } catch { this.queueTile(); return; }
+            ['unmanaged', 'size-changed', 'minimized'].forEach(prefix => {
+                const key = `${prefix}-${winId}`;
+                if (this._signalIds.has(key)) {
+                    const { object, id } = this._signalIds.get(key);
+                    try { object.disconnect(id); } catch {}
+                    this._signalIds.delete(key);
+                }
+            });
+            this.queueTile();
+        }
+    }
+
+    _toggleMonocle() {
+        if (!this._tilingEnabled) return;
+        this._monocleEnabled = !this._monocleEnabled;
+        this.tileNow();
+    }
+
+    _monocleNext() {
+        if (!this._tilingEnabled || !this._monocleEnabled) return;
+        const focused    = global.display.get_focus_window();
+        const monitorIdx = focused ? focused.get_monitor() : -1;
+        const wins       = this.windows.filter(w => !w.minimized &&
+            (monitorIdx < 0 || w.get_monitor() === monitorIdx));
+        if (wins.length < 2) return;
+        wins[(wins.indexOf(focused) + 1) % wins.length].activate(global.get_current_time());
+    }
+
+    _monoclePrev() {
+        if (!this._tilingEnabled || !this._monocleEnabled) return;
+        const focused    = global.display.get_focus_window();
+        const monitorIdx = focused ? focused.get_monitor() : -1;
+        const wins       = this.windows.filter(w => !w.minimized &&
+            (monitorIdx < 0 || w.get_monitor() === monitorIdx));
+        if (wins.length < 2) return;
+        const idx = wins.indexOf(focused);
+        wins[(idx - 1 + wins.length) % wins.length].activate(global.get_current_time());
     }
 }
 
-// ── EXTENSION‑WRAPPER ──────────────────────────
+// ── EXTENSION WRAPPER ──────────────────────────
 let tiler;
 
 function enable() {
-    tiler = new Tiler(Me);
+    tiler = new Tiler(ExtensionUtils.getCurrentExtension());
     tiler.enable();
 }
 
