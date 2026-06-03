@@ -95,6 +95,8 @@ class InteractionHandler {
         }
         this._grabOpIds.forEach(id => global.display.disconnect(id));
         this._grabOpIds = [];
+        this._wmSettings = null;
+        this._settings   = null;
     }
 
     _bind(key, handler) {
@@ -295,7 +297,8 @@ class Tiler {
             try { sig.object.disconnect(sig.id); } catch {}
         }
         this._signalIds.clear();
-        this.windows = [];
+        this.windows  = [];
+        this.settings = null;
     }
 
     _onSettingsChanged(key) {
@@ -379,10 +382,7 @@ class Tiler {
                 workArea.y + Math.floor((workArea.height - frame.height) / 2)
             );
 
-            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                if (win.get_display()) win.make_above();
-                return GLib.SOURCE_REMOVE;
-            });
+            if (win.get_display()) win.make_above();
             return GLib.SOURCE_REMOVE;
         });
         this._centerTimeoutIds.push(timeoutId);

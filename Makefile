@@ -161,7 +161,7 @@ build-appstore-modern:
 	@echo "==> Building MODERN AppStore zip (for GNOME 45+)..."
 	@rm -rf build && mkdir -p build/$(UUID)
 	$(call copies,$(COMMON_FILES),build/$(UUID))
-	@glib-compile-schemas build/$(UUID)/schemas
+	@rm -f build/$(UUID)/schemas/gschemas.compiled
 	@cp modern.js        build/$(UUID)/extension.js
 	@cp $(MODERN_PREFS)  build/$(UUID)/prefs.js
 	@sed -e "s/__UUID__/$(UUID)/g" \

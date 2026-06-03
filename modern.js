@@ -12,9 +12,11 @@ import GLib            from 'gi://GLib';
 import Clutter         from 'gi://Clutter';
 import { Extension }   from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main       from 'resource:///org/gnome/shell/ui/main.js';
+import * as Config     from 'resource:///org/gnome/shell/misc/config.js';
 
 // ── CONST ────────────────────────────────────────────
 const WM_SCHEMA          = 'org.gnome.desktop.wm.keybindings';
+const SHELL_MAJOR        = parseInt(Config.PACKAGE_VERSION.split('.')[0]);
 
 const TILING_DELAY_MS    = 20;   // Change Tiling Window Delay
 const CENTERING_DELAY_MS = 5;    // Change Centered Window Delay
@@ -35,6 +37,15 @@ const KEYBINDINGS = {
     'monocle-next':       (self) => self.tiler._monocleNext(),
     'monocle-prev':       (self) => self.tiler._monoclePrev(),
 };
+
+// ── MAXIMIZE HELPERS (API changed in GNOME 49) ───────────────
+function winIsMaximized(win) {
+    return SHELL_MAJOR >= 49 ? win.is_maximized() : !!win.get_maximized();
+}
+function winUnmaximize(win) {
+    if (SHELL_MAJOR >= 49) win.unmaximize();
+    else win.unmaximize(Meta.MaximizeFlags.BOTH);
+}
 
 // ── HELPER‑FUNCTION ────────────────────────────────────────
 function getPointerXY() {
@@ -105,6 +116,8 @@ class InteractionHandler {
         }
         this._grabOpIds.forEach(id => global.display.disconnect(id));
         this._grabOpIds = [];
+        this._wmSettings = null;
+        this._settings   = null;
     }
 
     _bind(key, handler) {
@@ -315,7 +328,8 @@ class Tiler {
             try { sig.object.disconnect(sig.id); } catch {}
         }
         this._signalIds.clear();
-        this.windows = [];
+        this.windows  = [];
+        this.settings = null;
     }
 
     _onSettingsChanged(key) {
@@ -389,8 +403,8 @@ class Tiler {
                 if (index > -1) this._centerTimeoutIds.splice(index, 1);
 
                 if (!win || !win.get_display()) return GLib.SOURCE_REMOVE;
-                if (win.get_maximized())
-                    win.unmaximize(Meta.MaximizeFlags.BOTH);
+                if (winIsMaximized(win))
+                    winUnmaximize(win);
 
                 const monitorIndex = win.get_monitor();
                 const workspace = this._workspaceManager.get_active_workspace();
@@ -406,11 +420,7 @@ class Tiler {
                         Math.floor((workArea.height - frame.height) / 2)
                 );
 
-                GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                    if (win.get_display())
-                        win.make_above();
-                    return GLib.SOURCE_REMOVE;
-                });
+                if (win.get_display()) win.make_above();
                 return GLib.SOURCE_REMOVE;
             }
         );
@@ -621,8 +631,8 @@ class Tiler {
             };
 
             wins.forEach((win) => {
-                if (win.get_maximized())
-                    win.unmaximize(Meta.MaximizeFlags.BOTH);
+                if (winIsMaximized(win))
+                    winUnmaximize(win);
             });
 
             if (this._monocleEnabled) {
