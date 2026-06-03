@@ -6,6 +6,7 @@
 #  make build-enterprise    → Erzeugt Enterprise-ZIP (Shell 40)
 #  make build-interim       → Erzeugt Interim-ZIP (Shell 41-44)
 #  make build-modern        → Erzeugt Modern-ZIP (Shell 45+)
+#  make build-appstore      → Erzeugt alle vier Store-ZIPs (Dateien direkt im Root, kein Unterordner)
 #  make install-legacy      → Installiert Legacy Extension
 #  make install-enterprise  → Installiert Enterprise Extension
 #  make install-interim     → Installiert Interim Extension
@@ -14,7 +15,7 @@
 ###############################################################################
 
 UUID     := simple-tiling@domoel
-VERSION  := 8
+VERSION  := 8.1
 EXTDIR   := $(HOME)/.local/share/gnome-shell/extensions
 
 COMMON_FILES     := schemas exceptions.txt locale *.css README.md LICENSE
@@ -35,6 +36,8 @@ define copies
 endef
 
 .PHONY: build build-legacy build-enterprise build-interim build-modern \
+        build-appstore build-appstore-legacy build-appstore-enterprise \
+        build-appstore-interim build-appstore-modern \
         install-legacy install-enterprise install-interim install-modern clean
 
 build: build-legacy build-enterprise build-interim build-modern
@@ -108,6 +111,67 @@ build-modern:
 	@echo "✓  $(UUID)-modern-v$(VERSION).zip created"
 
 ###############################################################################
+# Erzeugt AppStore-ZIPs (Dateien direkt im ZIP-Root, kein UUID-Unterordner)
+###############################################################################
+build-appstore: build-appstore-legacy build-appstore-enterprise build-appstore-interim build-appstore-modern
+
+build-appstore-legacy:
+	@echo "==> Building LEGACY AppStore zip (for GNOME 3.38)..."
+	@rm -rf build && mkdir -p build/$(UUID)
+	$(call copies,$(COMMON_FILES),build/$(UUID))
+	@glib-compile-schemas build/$(UUID)/schemas
+	@cp legacy.js        build/$(UUID)/extension.js
+	@cp $(LEGACY_PREFS)  build/$(UUID)/prefs.js
+	@sed -e "s/__UUID__/$(UUID)/g" \
+		 -e "s/__VERSION__/$(VERSION)/g" \
+		 metadata_legacy.json.in > build/$(UUID)/metadata.json
+	@cd build/$(UUID) && zip -qr ../../$(UUID)-legacy-store-v$(VERSION).zip .
+	@rm -rf build
+	@echo "✓  $(UUID)-legacy-store-v$(VERSION).zip created"
+
+build-appstore-enterprise:
+	@echo "==> Building ENTERPRISE AppStore zip (for GNOME 40)..."
+	@rm -rf build && mkdir -p build/$(UUID)
+	$(call copies,$(COMMON_FILES),build/$(UUID))
+	@glib-compile-schemas build/$(UUID)/schemas
+	@cp enterprise.js        build/$(UUID)/extension.js
+	@cp $(ENTERPRISE_PREFS)  build/$(UUID)/prefs.js
+	@sed -e "s/__UUID__/$(UUID)/g" \
+		 -e "s/__VERSION__/$(VERSION)/g" \
+		 metadata_enterprise.json.in > build/$(UUID)/metadata.json
+	@cd build/$(UUID) && zip -qr ../../$(UUID)-enterprise-store-v$(VERSION).zip .
+	@rm -rf build
+	@echo "✓  $(UUID)-enterprise-store-v$(VERSION).zip created"
+
+build-appstore-interim:
+	@echo "==> Building INTERIM AppStore zip (for GNOME 41-44)..."
+	@rm -rf build && mkdir -p build/$(UUID)
+	$(call copies,$(COMMON_FILES),build/$(UUID))
+	@glib-compile-schemas build/$(UUID)/schemas
+	@cp interim.js       build/$(UUID)/extension.js
+	@cp $(INTERIM_PREFS)  build/$(UUID)/prefs.js
+	@sed -e "s/__UUID__/$(UUID)/g" \
+		 -e "s/__VERSION__/$(VERSION)/g" \
+		 metadata_interim.json.in > build/$(UUID)/metadata.json
+	@cd build/$(UUID) && zip -qr ../../$(UUID)-interim-store-v$(VERSION).zip .
+	@rm -rf build
+	@echo "✓  $(UUID)-interim-store-v$(VERSION).zip created"
+
+build-appstore-modern:
+	@echo "==> Building MODERN AppStore zip (for GNOME 45+)..."
+	@rm -rf build && mkdir -p build/$(UUID)
+	$(call copies,$(COMMON_FILES),build/$(UUID))
+	@glib-compile-schemas build/$(UUID)/schemas
+	@cp modern.js        build/$(UUID)/extension.js
+	@cp $(MODERN_PREFS)  build/$(UUID)/prefs.js
+	@sed -e "s/__UUID__/$(UUID)/g" \
+		 -e "s/__VERSION__/$(VERSION)/g" \
+		 metadata_modern.json.in > build/$(UUID)/metadata.json
+	@cd build/$(UUID) && zip -qr ../../$(UUID)-modern-store-v$(VERSION).zip .
+	@rm -rf build
+	@echo "✓  $(UUID)-modern-store-v$(VERSION).zip created"
+
+###############################################################################
 # Installiert die verschiedenen Versionen
 ###############################################################################
 install-legacy: build-legacy
@@ -142,5 +206,6 @@ install-modern: build-modern
 # Bereinigt das Ausgangsverzeichnis
 ###############################################################################
 clean:
+	@rm -rf build
 	@rm -f $(UUID)-*.zip
 	@echo "Build directory and ZIPs removed."
