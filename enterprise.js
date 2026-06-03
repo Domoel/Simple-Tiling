@@ -326,12 +326,15 @@ class Tiler {
     }
 
     _onFocusChanged() {
+        if (!this.settings.get_boolean('pick-mode')) return;
         const win = global.display.get_focus_window();
         if (!win || win.get_window_type() !== Meta.WindowType.NORMAL) return;
+        const appId = (win.get_gtk_application_id() || '').toLowerCase();
+        if (appId === 'org.gnome.shell.extensions') return;
         this.settings.set_string('last-focused-wm-class',
             (win.get_wm_class() || '').toLowerCase());
-        this.settings.set_string('last-focused-app-id',
-            (win.get_gtk_application_id() || '').toLowerCase());
+        this.settings.set_string('last-focused-app-id', appId);
+        this.settings.set_boolean('pick-mode', false);
     }
 
     _loadExceptions() {

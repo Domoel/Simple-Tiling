@@ -98,7 +98,7 @@ export default class SimpleTilingPrefs extends ExtensionPreferences {
         // ── EXCEPTIONS ─────────────────────────────────────────────
         const groupExceptions = new Adw.PreferencesGroup({
             title: 'Exceptions',
-            description: 'Apps excluded from tiling. To detect an app automatically: focus its window first, then click 🔍. Or type the WM_CLASS (X11) / App ID (Wayland) manually. Values are matched case-insensitively.',
+            description: 'Apps excluded from tiling. To detect an app automatically: click 🔍, then click on the target window. Or type the WM_CLASS (X11) / App ID (Wayland) manually. Values are matched case-insensitively.',
         });
         page.add(groupExceptions);
 
@@ -147,9 +147,19 @@ export default class SimpleTilingPrefs extends ExtensionPreferences {
         settings.connect('changed::exceptions', refreshExceptions);
 
         detectBtn.connect('clicked', () => {
-            const appId   = settings.get_string('last-focused-app-id');
-            const wmClass = settings.get_string('last-focused-wm-class');
-            addRow.text = appId || wmClass;
+            settings.set_boolean('pick-mode', true);
+            detectBtn.sensitive = false;
+            addRow.title = 'Click on a window…';
+        });
+
+        settings.connect('changed::pick-mode', () => {
+            if (!settings.get_boolean('pick-mode')) {
+                const appId   = settings.get_string('last-focused-app-id');
+                const wmClass = settings.get_string('last-focused-wm-class');
+                addRow.text  = appId || wmClass;
+                addRow.title = 'Add exception…';
+                detectBtn.sensitive = true;
+            }
         });
 
         addBtn.connect('clicked', () => {

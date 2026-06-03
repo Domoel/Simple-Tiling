@@ -86,13 +86,17 @@
       <summary>Focus the previous window in monocle mode.</summary>
     </key>
 
+    <key name="pick-mode" type="b">
+      <default>false</default>
+      <summary>When true, the extension captures the next focused window for the exceptions picker.</summary>
+    </key>
     <key name="last-focused-wm-class" type="s">
       <default>''</default>
-      <summary>WM_CLASS of the last focused window (used by preferences picker).</summary>
+      <summary>WM_CLASS of the picked window (written by the extension, read by preferences).</summary>
     </key>
     <key name="last-focused-app-id" type="s">
       <default>''</default>
-      <summary>App ID of the last focused window (used by preferences picker).</summary>
+      <summary>App ID of the picked window (written by the extension, read by preferences).</summary>
     </key>
 
     <key name="exceptions" type="as">
