@@ -419,6 +419,7 @@ class Tiler {
         return (
             win &&
             !win.minimized &&
+            !win.skip_taskbar &&
             !this._isException(win) &&
             !this._floatedWindows.has(win) &&
             win.get_window_type() === Meta.WindowType.NORMAL

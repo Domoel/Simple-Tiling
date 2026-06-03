@@ -113,28 +113,28 @@ build-modern:
 install-legacy: build-legacy
 	@echo "==> Installing LEGACY Extension..."
 	@rm -rf $(EXTDIR)/$(UUID)
-	@unzip -q $(UUID)-legacy-v$(VERSION).zip -d $(EXTDIR)/$(UUID)
+	@unzip -q $(UUID)-legacy-v$(VERSION).zip -d $(EXTDIR)
 	@rm -f $(UUID)-legacy-v$(VERSION).zip
 	@echo "✓  Legacy Extension installed to $(EXTDIR)/$(UUID). Restart GNOME Shell to apply."
 
 install-enterprise: build-enterprise
 	@echo "==> Installing ENTERPRISE Extension..."
 	@rm -rf $(EXTDIR)/$(UUID)
-	@unzip -q $(UUID)-enterprise-v$(VERSION).zip -d $(EXTDIR)/$(UUID)
+	@unzip -q $(UUID)-enterprise-v$(VERSION).zip -d $(EXTDIR)
 	@rm -f $(UUID)-enterprise-v$(VERSION).zip
 	@echo "✓  Enterprise Extension installed to $(EXTDIR)/$(UUID). Restart GNOME Shell to apply."
 
 install-interim: build-interim
 	@echo "==> Installing INTERIM Extension..."
 	@rm -rf $(EXTDIR)/$(UUID)
-	@unzip -q $(UUID)-interim-v$(VERSION).zip -d $(EXTDIR)/$(UUID)
+	@unzip -q $(UUID)-interim-v$(VERSION).zip -d $(EXTDIR)
 	@rm -f $(UUID)-interim-v$(VERSION).zip
 	@echo "✓  Interim Extension installed to $(EXTDIR)/$(UUID). Restart GNOME Shell to apply."
 
 install-modern: build-modern
 	@echo "==> Installing MODERN Extension..."
 	@rm -rf $(EXTDIR)/$(UUID)
-	@unzip -q $(UUID)-modern-v$(VERSION).zip -d $(EXTDIR)/$(UUID)
+	@unzip -q $(UUID)-modern-v$(VERSION).zip -d $(EXTDIR)
 	@rm -f $(UUID)-modern-v$(VERSION).zip
 	@echo "✓  Modern Extension installed to $(EXTDIR)/$(UUID). Restart GNOME Shell to apply."
 
