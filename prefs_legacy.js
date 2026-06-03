@@ -170,7 +170,112 @@ function buildPrefsWidget() {
         0
     );
     prefsWidget.add(behaviorFrame);
-    
+
+    // ── EXCEPTIONS ────────────────────────────────────────────
+    const exceptTitle = new Gtk.Label({
+        label: '<b>Exceptions</b>',
+        use_markup: true,
+        halign: Gtk.Align.START,
+        visible: true,
+    });
+    const exceptFrame = new Gtk.Frame({
+        label_widget: exceptTitle,
+        shadow_type: Gtk.ShadowType.NONE,
+        visible: true,
+    });
+    const exceptBox = new Gtk.Box({
+        orientation: Gtk.Orientation.VERTICAL,
+        margin: 12,
+        spacing: 6,
+        visible: true,
+    });
+    exceptFrame.add(exceptBox);
+
+    const exceptDesc = new Gtk.Label({
+        label: 'Apps excluded from tiling. Enter the WM_CLASS (X11) or App ID (Wayland).',
+        halign: Gtk.Align.START,
+        wrap: true,
+        visible: true,
+    });
+    exceptBox.add(exceptDesc);
+
+    const listBox = new Gtk.ListBox({
+        selection_mode: Gtk.SelectionMode.NONE,
+        visible: true,
+    });
+    const scrolled = new Gtk.ScrolledWindow({
+        min_content_height: 80,
+        max_content_height: 200,
+        propagate_natural_height: true,
+        visible: true,
+    });
+    scrolled.add(listBox);
+    exceptBox.add(scrolled);
+
+    const refreshExceptions = () => {
+        listBox.get_children().forEach(child => listBox.remove(child));
+        for (const exc of settings.get_strv('exceptions')) {
+            const rowBox = new Gtk.Box({
+                orientation: Gtk.Orientation.HORIZONTAL,
+                spacing: 6,
+                visible: true,
+            });
+            const lbl = new Gtk.Label({
+                label: exc,
+                halign: Gtk.Align.START,
+                hexpand: true,
+                visible: true,
+            });
+            const removeBtn = new Gtk.Button({
+                relief: Gtk.ReliefStyle.NONE,
+                visible: true,
+            });
+            removeBtn.set_image(new Gtk.Image({ icon_name: 'list-remove-symbolic', visible: true }));
+            removeBtn.connect('clicked', () => {
+                settings.set_strv('exceptions',
+                    settings.get_strv('exceptions').filter(e => e !== exc));
+            });
+            rowBox.pack_start(lbl, true, true, 0);
+            rowBox.pack_end(removeBtn, false, false, 0);
+            const listRow = new Gtk.ListBoxRow({ visible: true });
+            listRow.add(rowBox);
+            listBox.add(listRow);
+        }
+        listBox.show_all();
+    };
+
+    refreshExceptions();
+    settings.connect('changed::exceptions', refreshExceptions);
+
+    const addBox = new Gtk.Box({
+        orientation: Gtk.Orientation.HORIZONTAL,
+        spacing: 6,
+        visible: true,
+    });
+    const addEntry = new Gtk.Entry({
+        placeholder_text: 'Add exception…',
+        hexpand: true,
+        visible: true,
+    });
+    const addBtn = new Gtk.Button({ visible: true });
+    addBtn.set_image(new Gtk.Image({ icon_name: 'list-add-symbolic', visible: true }));
+
+    const doAdd = () => {
+        const val = addEntry.get_text().trim().toLowerCase();
+        if (!val) return;
+        const current = settings.get_strv('exceptions');
+        if (!current.includes(val))
+            settings.set_strv('exceptions', [...current, val]);
+        addEntry.set_text('');
+    };
+    addBtn.connect('clicked', doAdd);
+    addEntry.connect('activate', doAdd);
+    addBox.pack_start(addEntry, true, true, 0);
+    addBox.pack_end(addBtn, false, false, 0);
+    exceptBox.add(addBox);
+
+    prefsWidget.add(exceptFrame);
+
     prefsWidget.show_all();
     return prefsWidget;
 }

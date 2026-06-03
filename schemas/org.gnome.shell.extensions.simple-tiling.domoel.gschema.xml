@@ -58,6 +58,12 @@
       <summary>Behavior for newly opened windows.</summary>
       <description>Determines if a new window is added as master or stack window.</description>
     </key>
-    
+
+    <key name="exceptions" type="as">
+      <default>['ulauncher', 'steam', 'element', 'totem', 'extension-manager', 'timeshift-gtk', 'gnome-screenshot', 'org.gnome.nautiluspreviewer', 'org.gnome.shell.extensions', 'evolution-alarm-notify']</default>
+      <summary>List of window classes or app IDs excluded from tiling.</summary>
+      <description>WM_CLASS values (X11) or app IDs (Wayland). Matched case-insensitively.</description>
+    </key>
+
   </schema>
 </schemalist>

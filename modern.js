@@ -303,24 +303,16 @@ class Tiler {
     }
 
     _onSettingsChanged() {
-        this._innerGap          = this.settings.get_int('inner-gap');
-        this._outerGapVertical  = this.settings.get_int('outer-gap-vertical');
-        this._outerGapHorizontal= this.settings.get_int('outer-gap-horizontal');
+        this._innerGap           = this.settings.get_int('inner-gap');
+        this._outerGapVertical   = this.settings.get_int('outer-gap-vertical');
+        this._outerGapHorizontal = this.settings.get_int('outer-gap-horizontal');
+        this._exceptions         = this.settings.get_strv('exceptions').map(e => e.toLowerCase());
         this.queueTile();
     }
 
     _loadExceptions() {
-        const file = Gio.File.new_for_path(this._extension.path + '/exceptions.txt');
-        if (!file.query_exists(null)) { this._exceptions=[]; return; }
-
-        const [ok,data] = file.load_contents(null);
-        if (!ok) { this._exceptions=[]; return; }
-
-        const txt = new TextDecoder('utf-8').decode(data);
-        this._exceptions = txt.split('\n')
-                              .map(l=>l.trim())
-                              .filter(l=>l && !l.startsWith('#'))
-                              .map(l=>l.toLowerCase());
+        this._exceptions = this.settings.get_strv('exceptions')
+            .map(e => e.toLowerCase());
     }
 
     _isException(win) {

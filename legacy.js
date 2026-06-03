@@ -11,7 +11,6 @@ const Shell = imports.gi.Shell;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const ExtensionUtils = imports.misc.extensionUtils;
-const ByteArray = imports.byteArray;
 
 const Me = ExtensionUtils.getCurrentExtension();
 const SCHEMA_NAME = "org.gnome.shell.extensions.simple-tiling.domoel";
@@ -369,26 +368,16 @@ class Tiler {
     }
 
     _onSettingsChanged() {
-        this._innerGap = this._settings.get_int("inner-gap");
-        this._outerGapVertical = this._settings.get_int("outer-gap-vertical");
+        this._innerGap           = this._settings.get_int("inner-gap");
+        this._outerGapVertical   = this._settings.get_int("outer-gap-vertical");
         this._outerGapHorizontal = this._settings.get_int("outer-gap-horizontal");
+        this._exceptions         = this._settings.get_strv("exceptions").map(e => e.toLowerCase());
         this.queueTile();
     }
 
     _loadExceptions() {
-        const file = Gio.file_new_for_path(Me.path + "/exceptions.txt");
-        if (!file.query_exists(null)) {
-            this._exceptions = [];
-            return;
-        }
-        const [ok, data] = file.load_contents(null);
-        this._exceptions = ok
-            ? ByteArray.toString(data)
-                  .split("\n")
-                  .map((l) => l.trim())
-                  .filter((l) => l && !l.startsWith("#"))
-                  .map((l) => l.toLowerCase())
-            : [];
+        this._exceptions = this._settings.get_strv("exceptions")
+            .map(e => e.toLowerCase());
     }
 
     _isException(win) {

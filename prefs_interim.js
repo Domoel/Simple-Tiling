@@ -85,5 +85,58 @@ export default class SimpleTilingPrefs extends ExtensionPreferences {
         });
         rowKeys.add_suffix(btnOpenKeyboard);
         rowKeys.set_activatable_widget(btnOpenKeyboard);
+
+        // ── EXCEPTIONS ─────────────────────────────────────────────
+        const groupExceptions = new Adw.PreferencesGroup({
+            title: 'Exceptions',
+            description: 'Apps excluded from tiling. Enter the WM_CLASS (X11) or App ID (Wayland). Values are matched case-insensitively.',
+        });
+        page.add(groupExceptions);
+
+        const addRow = new Adw.EntryRow({ title: 'Add exception…' });
+        const addBtn = new Gtk.Button({
+            icon_name: 'list-add-symbolic',
+            valign: Gtk.Align.CENTER,
+            css_classes: ['flat', 'circular'],
+        });
+        addRow.add_suffix(addBtn);
+
+        const exceptionRows = [];
+
+        const refreshExceptions = () => {
+            exceptionRows.forEach(r => groupExceptions.remove(r));
+            exceptionRows.length = 0;
+            groupExceptions.remove(addRow);
+
+            for (const exc of settings.get_strv('exceptions')) {
+                const row = new Adw.ActionRow({ title: exc });
+                const btn = new Gtk.Button({
+                    icon_name: 'list-remove-symbolic',
+                    valign: Gtk.Align.CENTER,
+                    css_classes: ['flat', 'circular'],
+                });
+                btn.connect('clicked', () => {
+                    settings.set_strv('exceptions',
+                        settings.get_strv('exceptions').filter(e => e !== exc));
+                });
+                row.add_suffix(btn);
+                groupExceptions.add(row);
+                exceptionRows.push(row);
+            }
+
+            groupExceptions.add(addRow);
+        };
+
+        refreshExceptions();
+        settings.connect('changed::exceptions', refreshExceptions);
+
+        addBtn.connect('clicked', () => {
+            const val = addRow.text.trim().toLowerCase();
+            if (!val) return;
+            const current = settings.get_strv('exceptions');
+            if (!current.includes(val))
+                settings.set_strv('exceptions', [...current, val]);
+            addRow.text = '';
+        });
     }
 }
