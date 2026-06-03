@@ -544,47 +544,55 @@ class Tiler {
         const windowsToTile = this.windows.filter((win) => !win.minimized);
         if (windowsToTile.length === 0) return;
 
-        const monitor = Main.layoutManager.primaryMonitor;
-        if (!monitor) return;
         const workspace = this._workspaceManager.get_active_workspace();
-        const workArea = workspace.get_work_area_for_monitor(monitor.index);
 
-        const innerArea = {
-            x: workArea.x + this._outerGapHorizontal,
-            y: workArea.y + this._outerGapVertical,
-            width: workArea.width - 2 * this._outerGapHorizontal,
-            height: workArea.height - 2 * this._outerGapVertical,
-        };
-        windowsToTile.forEach((win) => {
-            if (win.get_maximized()) win.unmaximize(Meta.MaximizeFlags.BOTH);
-        });
-        if (windowsToTile.length === 1) {
-            windowsToTile[0].move_resize_frame(
-                true,
-                innerArea.x,
-                innerArea.y,
-                innerArea.width,
-                innerArea.height
-            );
-            return;
+        // Group windows by monitor, preserving global ordering within each group.
+        const byMonitor = new Map();
+        for (const win of windowsToTile) {
+            const idx = win.get_monitor();
+            if (!byMonitor.has(idx)) byMonitor.set(idx, []);
+            byMonitor.get(idx).push(win);
         }
-        const gap = Math.floor(this._innerGap / 2);
-        const masterWidth = Math.floor(innerArea.width / 2) - gap;
-        const master = windowsToTile[0];
-        master.move_resize_frame(
-            true,
-            innerArea.x,
-            innerArea.y,
-            masterWidth,
-            innerArea.height
-        );
-        const stackArea = {
-            x: innerArea.x + masterWidth + this._innerGap,
-            y: innerArea.y,
-            width: innerArea.width - masterWidth - this._innerGap,
-            height: innerArea.height,
-        };
-        this._splitLayout(windowsToTile.slice(1), stackArea);
+
+        for (const [monitorIdx, wins] of byMonitor) {
+            const workArea = workspace.get_work_area_for_monitor(monitorIdx);
+
+            const innerArea = {
+                x: workArea.x + this._outerGapHorizontal,
+                y: workArea.y + this._outerGapVertical,
+                width:  workArea.width  - 2 * this._outerGapHorizontal,
+                height: workArea.height - 2 * this._outerGapVertical,
+            };
+
+            wins.forEach((win) => {
+                if (win.get_maximized())
+                    win.unmaximize(Meta.MaximizeFlags.BOTH);
+            });
+
+            if (wins.length === 1) {
+                wins[0].move_resize_frame(
+                    true,
+                    innerArea.x, innerArea.y,
+                    innerArea.width, innerArea.height
+                );
+                continue;
+            }
+
+            const gap = Math.floor(this._innerGap / 2);
+            const masterWidth = Math.floor(innerArea.width / 2) - gap;
+            wins[0].move_resize_frame(
+                true,
+                innerArea.x, innerArea.y,
+                masterWidth, innerArea.height
+            );
+            const stackArea = {
+                x: innerArea.x + masterWidth + this._innerGap,
+                y: innerArea.y,
+                width:  innerArea.width  - masterWidth - this._innerGap,
+                height: innerArea.height,
+            };
+            this._splitLayout(wins.slice(1), stackArea);
+        }
     }
 }
 
