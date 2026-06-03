@@ -111,6 +111,7 @@ class InteractionHandler {
     
     _prepareWmShortcuts() {
         const schema = this._wmSettings.settings_schema;
+        if (!schema) return;
         const keys = [];
         if (schema.has_key("toggle-tiled-left"))
             keys.push("toggle-tiled-left", "toggle-tiled-right");
@@ -428,12 +429,8 @@ class Tiler {
                 workArea.y + Math.floor((workArea.height - frame.height) / 2)
             );
             GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                if (win.get_display()) {
-                    if (typeof win.set_keep_above === "function")
-                        win.set_keep_above(true);
-                    else if (typeof win.make_above === "function")
-                        win.make_above();
-                }
+                if (win.get_display())
+                    win.make_above();
                 return GLib.SOURCE_REMOVE;
             });
             return GLib.SOURCE_REMOVE;
