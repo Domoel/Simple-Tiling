@@ -4,23 +4,19 @@
   </a>
 </p>
 
-<h1 align="center">
-Simple Tiling 
-</span>
+<h1 align="center">Simple Tiling</h1>
 <h4 align="center">
-<span style="display:inline-flex; align-items:center; gap:12px;">
 A lightweight, opinionated, and automatic tiling window manager for GNOME Shell
-</span>
-<p>
+</h4>
 
 <h6 align="center">
   <a href="https://ztfr.eu">🏰 Website</a>
   ·
   <a href="https://ztfr.eu/matrix">📰 Zeitfresser Matrix Community</a>
   ·
-  <a href="https://social.ztfr.eu/@dome">🐘 Mastodon</a> 
+  <a href="https://social.ztfr.eu/@dome">🐘 Mastodon</a>
   ·
-  <a href="https://look.ztfr.eu/#/#support:ztfr.eu">💬 Supportchat</a> 
+  <a href="https://look.ztfr.eu/#/#support:ztfr.eu">💬 Supportchat</a>
 </h6>
 <br>
 
@@ -28,116 +24,122 @@ A lightweight, opinionated, and automatic tiling window manager for GNOME Shell
 
 ## Introduction
 
-Simple Tiling is a GNOME Shell extension created for users who want a clean, predictable, and automatic tiling layout without the complexity of larger, more feature-heavy tiling extensions. It is designed to be simple to configure and intuitive to use, focusing on a core set of essential tiling features.
+Simple Tiling is a GNOME Shell extension for users who want a clean, predictable, and automatic tiling layout without the complexity of larger, more feature-heavy tiling extensions. It is designed to be simple to configure and intuitive to use, focusing on a core set of essential tiling features.
 
-This extension was built from the ground up to be stable and performant on **GNOME Shell 3.38**. However it is now also supporting modern gnome shells up to **version 49**.
+The extension supports **GNOME Shell 3.38 through 49** across four dedicated builds and runs on both **X11 and Wayland**.
 
 ## Features
 
 * **Automatic Tiling:** Windows are automatically arranged into a master and stack layout without any manual intervention.
-* **Master & Fibonacci Stack Layout:** The first window becomes the "master," occupying the left half of the screen. All subsequent windows form a "stack" on the right half, which is tiled using a space-efficient Fibonacci-style algorithm.
-* **Configurable New Window Behavior:** Choose whether new windows open as the new master or are appended to the end of the stack.
-* **Tiling Lock:** The layout is strict by default. If you manually move a window with the mouse and drop it in an empty space, it will automatically "snap back" to its designated tile position, preserving the integrity of the layout.
+* **Master & Fibonacci Stack Layout:** The first window becomes the "master," occupying the left portion of the screen. All subsequent windows form a "stack" on the right, tiled using a space-efficient Fibonacci-style algorithm.
+* **Configurable Master Window Ratio:** Set the master window width anywhere between 20 % and 80 % of the work area directly from the preferences window.
+* **Multi-Monitor Support:** Each connected monitor maintains its own independent master/stack layout. Windows stay on their respective monitors without interference.
+* **Monocle Mode:** Switch to a full-screen single-window layout at any time with a keyboard shortcut. Cycle through all tiled windows using the next/previous monocle shortcuts without changing the tile order.
+* **Toggle Tiling:** Enable or disable the entire tiling system on the fly with an assignable keyboard shortcut — without disabling the extension. Re-enabling rescans all open windows and restores the layout automatically.
+* **Float Window:** Temporarily remove any window from the tiling layout with a keyboard shortcut. The window can then be positioned freely. Press the shortcut again to snap it back into the layout.
+* **Configurable New Window Behavior:** Choose whether new windows open as the new master or are appended to the stack.
 * **Interactive Window Swapping:**
-    * **Drag & Drop:** Swap any two windows by simply dragging one and dropping it over the other.
-    * **Keyboard Shortcuts:** A full set of keyboard shortcuts allows you to swap the focused window with the master or with its nearest neighbor in any direction (left, right, up, down).
-* **Interactive Window Focus Switcher:** Change the current window focus with a set of customizable keyboard shortcuts in every direction (left, right, up, down).
-* **Simple Settings Panel:** A simple settings panel within the gnome extension manager menu to adjust key bindings, window gaps / margins and window behavior.
-* **External Exception List:** Use a simple `exceptions.txt` file to list applications (by their `WM_CLASS`) that should be ignored by the tiling manager.
-* **Smart Pop-up Handling:** Windows on the exception list, as well as dialogs and other pop-ups, are automatically centered and kept "always on top" for a smooth workflow.
-* **Configurable Tiling Window Delays:** Easily configure the tiling window delays if you have race condition issues by editing variables directly in the `extension.js`.
+    * **Drag & Drop:** Swap any two windows by dragging one over the other.
+    * **Keyboard Shortcuts:** Swap the focused window with the master or with its nearest neighbor in any direction (left, right, up, down).
+* **Interactive Window Focus Switcher:** Move focus between windows with customizable keyboard shortcuts in all four directions.
+* **Exceptions Management:** Exclude specific applications from tiling directly from the preferences window — no file editing required. Exceptions are stored persistently in GSettings and survive extension updates. Excluded windows are automatically centered and kept above all other windows.
+* **Smart Pop-up Handling:** Dialogs, overlay windows, and applications that set the skip-taskbar flag are automatically excluded from tiling.
+* **Simple Settings Panel:** Adjust keybindings, window gaps, master ratio, new window behavior, and exceptions from the GNOME Extensions preferences window.
 
 ## Requirements
 
-Please note that this extension has been developed for a very specific environment. However, with the latest updates, I have ensured that modern Gnome Shells and Wayland are also supported.
-
-* **GNOME Shell Version:** **3.38 - 49**
-* **Session Type:** **X11** (Wayland is still in beta but should be fine!).
-* **Monitor Setup:** **Single monitor only.** Multi-monitor support is not yet implemented.
+* **GNOME Shell Version:** **3.38 – 49**
+* **Session Type:** **X11 and Wayland** (fully supported)
+* **Monitor Setup:** Single and multi-monitor setups supported.
 
 ## Installation
 
-#### Recommended:
+#### Recommended
 
 Use the [GNOME Shell Extensions website](https://extensions.gnome.org/extension/8345/simple-tiling/) to install and enable the latest version.
 
 #### Manual Installation
 
-The repository includes a Makefile that produces ready‑to‑install ZIP packages for the three supported Gnome‑Shell lines (a legacy build for Gnome-Shell 3.38, an enterprise build for Gnome-Shell 40, an interim build for Gnome-Shell 41 - 44 and a modern build for Gnome-Shell 45+).
+The repository includes a Makefile that produces ready-to-install ZIP packages for the four supported GNOME Shell lines.
 
-1. **Clone the Source**
+1. **Clone the source**
    ```bash
    git clone https://github.com/Domoel/Simple-Tiling.git
    cd Simple-Tiling
    ```
 
-2. **Install the package that matches your GNOME-Shell version**
+2. **Install the package that matches your GNOME Shell version**
 
-   Open the Terminal within the Simple-Tiling directory and run
    ```bash
-   make install-legacy        # Installs Legacy Extension (Gnome-Shell 3.38)
-   make install-enterprise    # Installs Enterprise Extension (Gnome-Shell 40)
-   make install-interim       # Installs Interim Extension (Gnome-Shell 41 - 44)
-   make install-modern        # Installs Modern Extension (Gnome-Shell 45+)
+   make install-legacy        # GNOME Shell 3.38
+   make install-enterprise    # GNOME Shell 40
+   make install-interim       # GNOME Shell 41 – 44
+   make install-modern        # GNOME Shell 45+
    ```
-   **Note:** This command will directly install the extension in the choosen variant (legacy, interim or modern). If you want to manually create and upload the extension to your gnome extensions directory `(~/.local/share/gnome-shell/extensions)` you can just run `make build` to create all versions as .zip or `make build-legacy`, `make build-enterprise`, `make build-interim` or `make build-modern` to create them seperately as .zip. To enable them you need to unzip these archives and put them into your extensions directory.
 
-4.  **Reload the shell**
-    ```bash
-    Press Alt + F2, type  r , hit ↩   (works for X11 and Wayland)
-    ```
-5.  **Clean up (optional)**
-    ```bash
-    make clean        # perform this command in the downloaded folder to remove builds and generated ZIPs
-    ```
+   To build ZIP archives without installing, run `make build` (all versions) or `make build-legacy` / `make build-enterprise` / `make build-interim` / `make build-modern` individually. Place the extracted archive in `~/.local/share/gnome-shell/extensions/` to install manually.
+
+3. **Reload the shell**
+   ```
+   Press Alt + F2, type r, hit Enter   (X11)
+   Log out and back in                  (Wayland)
+   ```
+
+4. **Clean up (optional)**
+   ```bash
+   make clean
+   ```
 
 ## Configuration
 
 #### Keyboard Shortcuts
 
-All keyboard shortcuts can be configured through the Settings panel of Simple Tiling (which can be found in the Gnome Extension Application):
-1.  Open **Settings**.
-2.  Navigate to **Keyboard** -> **View and Customize Shortcuts**.
-3.  Scroll down to the **Custom Shortcuts** section at the bottom.
-4.  You will find all shortcuts for "Simple Tiling" listed there and can change them to your preference.
+All keyboard shortcuts are configured in GNOME Settings:
 
-#### Ignoring Applications (`exceptions.txt`)
+1. Open **Settings → Keyboard → View and Customize Shortcuts**.
+2. Scroll to the **Custom Shortcuts** section.
+3. All Simple Tiling shortcuts are listed there.
 
-To prevent an application from being tiled, you can add its `WM_CLASS` (x11) or `App ID` (Wayland) to the `exceptions.txt` file in the extension's directory.
+| Action | Default |
+|---|---|
+| Swap with master | `Super + Return` |
+| Swap left / right / up / down | `Super + ←/→/↑/↓` |
+| Focus left / right / up / down | `Alt + ←/→/↑/↓` |
+| Toggle tiling | *(unset)* |
+| Float / unfloat focused window | *(unset)* |
+| Toggle monocle mode | *(unset)* |
+| Monocle: next window | *(unset)* |
+| Monocle: previous window | *(unset)* |
 
-* Each application's `WM_CLASS` or `App ID` should be on a new line.
-* Lines starting with `#` are treated as comments and are ignored.
-* The check is case-insensitive.
+#### Exceptions
 
-To find an application's `WM_CLASS`, open a terminal and run the command `xprop WM_CLASS`. Your cursor will turn into a crosshair. Click on the window of the application you want to exclude. To find the `App ID`, Press Alt + F2, type 'lg', and press Enter. In the Looking Glass window, click the "Windows" tab. Click on the desired window to see its details. Find the value for "app id" and add it to a new line below.
+Applications excluded from tiling are managed directly in the Simple Tiling preferences window — no file editing required.
 
-An Example of an exceptions.txt can be found in the repo.
+* Open the extension preferences and navigate to the **Exceptions** section.
+* Enter the application's `WM_CLASS` (X11) or `App ID` (Wayland) and click the add button.
+* Remove any entry with the delete button next to it.
+* The check is case-insensitive. Exceptions are stored in GSettings and survive extension updates.
 
-Ignored applications will be opened screen centered and kept above all other windows. These applications can be moved across the screen in floating mode.
+To find an application's `WM_CLASS`, run `xprop WM_CLASS` in a terminal and click the window. To find the `App ID` on Wayland, press `Alt + F2`, type `lg`, open the **Windows** tab, and click the target window.
 
-#### Adjusting inner and/or outer Window Gaps / Margins
+Excluded applications are centered on screen and kept above all other windows.
 
-You can adjust the window gap margins (inner gaps between windows, outer gaps horizontal as well as vertical) in the Settings panel of Simple Tiling (which can be found in the Gnome Extension Application).
+#### Window Gaps
 
-#### Configurable New Window Behavior
+Inner gap (between windows) and outer gaps (horizontal and vertical screen edges) are adjustable in the preferences window.
 
-A toogle setting allows you to control the behavior for newly opened windows. You can choose to either have them become the new master window (pushing the old master into the stack) or have them appended to the stack as the last window (Default).
+#### Master Window Ratio
 
-#### Adjusting Tiling Window Delays
+The master window width defaults to 50 % of the work area. Adjust it between 20 % and 80 % in the preferences window under **Window Behavior**.
 
-If you have race condition issues between mutter (Gnome WM) and the Simple Tiling extension, you can adjust the window delay settings (both for tiling windows as well as for centered application from the exceptions list) directly in the extensions.js (~/.local/share/gnome-shell/extensions/simple-tiling@domoel/extension.js). You will find the parameter at line 17 & 18. Defaults to "20" for General Tiling Window Delay and "5" for centered Apps on the Exception List.
+#### Tiling Window Delays
 
-## Future Development
-
-This extension was built to solve a specific need. However, future enhancements could include:
-* Multi-monitor support.
-* Additional layout algorithms.
-* A more detailed settings panel to configure other options via a GUI.
+If you experience race conditions between Mutter and the extension, the tiling delay constants (`TILING_DELAY_MS`, `CENTERING_DELAY_MS`) can be adjusted at the top of `extension.js` after installation.
 
 ## Development & Support
 
-If you need to get support or want to participate in the active development of this software, you can <a href="https://ztfr.eu/matrix">join our Zeitfresser Matrix Community</a> or the <a href="https://look.ztfr.eu/#/#support:ztfr.eu">Development & Support Channel</a> on Matrix.
+If you need support or want to participate in the development of this extension, join the <a href="https://ztfr.eu/matrix">Zeitfresser Matrix Community</a> or the <a href="https://look.ztfr.eu/#/#support:ztfr.eu">Development & Support Channel</a> on Matrix.
 
 ## License
 
-This project is licensed under the MIT License - see the `LICENSE` file for details.
+This project is licensed under the MIT License — see the `LICENSE` file for details.
