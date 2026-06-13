@@ -60,10 +60,10 @@ build-legacy:
 	@echo "✓  $(UUID)-legacy-v$(VERSION).zip created"
 
 ###############################################################################
-# Erzeugt Enterprise-ZIP (Shell 40)
+# Erzeugt Enterprise-ZIP (Shell 40-41)
 ###############################################################################
 build-enterprise:
-	@echo "==> Building ENTERPRISE zip (for GNOME 40)..."
+	@echo "==> Building ENTERPRISE zip (for GNOME 40-41)..."
 	@rm -rf build && mkdir -p build/$(UUID)
 	$(call copies,$(COMMON_FILES),build/$(UUID))
 	@glib-compile-schemas build/$(UUID)/schemas
@@ -131,7 +131,7 @@ build-appstore-legacy:
 	@echo "✓  $(UUID)-legacy-store-v$(VERSION).zip created"
 
 build-appstore-enterprise:
-	@echo "==> Building ENTERPRISE AppStore zip (for GNOME 40)..."
+	@echo "==> Building ENTERPRISE AppStore zip (for GNOME 40-41)..."
 	@rm -rf build && mkdir -p build/$(UUID)
 	$(call copies,$(COMMON_FILES),build/$(UUID))
 	@glib-compile-schemas build/$(UUID)/schemas
@@ -186,7 +186,7 @@ install-legacy: build-legacy
 	@echo "✓  Legacy Extension installed to $(EXTDIR)/$(UUID). Restart GNOME Shell to apply."
 
 install-enterprise: build-enterprise
-	@echo "==> Installing ENTERPRISE Extension..."
+	@echo "==> Installing ENTERPRISE Extension (GNOME 40-41)..."
 	@rm -rf $(EXTDIR)/$(UUID)
 	@unzip -q $(UUID)-enterprise-v$(VERSION).zip -d $(EXTDIR)
 	@rm -f $(UUID)-enterprise-v$(VERSION).zip
