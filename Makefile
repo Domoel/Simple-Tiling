@@ -77,10 +77,10 @@ build-enterprise:
 	@echo "✓  $(UUID)-enterprise-v$(VERSION).zip created"
 
 ###############################################################################
-# Erzeugt Interim-ZIP (Shell 41-44)
+# Erzeugt Interim-ZIP (Shell 42-44)
 ###############################################################################
 build-interim:
-	@echo "==> Building INTERIM zip (for GNOME 41-44)..."
+	@echo "==> Building INTERIM zip (for GNOME 42-44)..."
 	@rm -rf build && mkdir -p build/$(UUID)
 	$(call copies,$(COMMON_FILES),build/$(UUID))
 	@glib-compile-schemas build/$(UUID)/schemas
@@ -125,6 +125,7 @@ build-appstore-legacy:
 	@sed -e "s/__UUID__/$(UUID)/g" \
 		 -e "s/__VERSION__/$(VERSION)/g" \
 		 metadata_legacy.json.in > build/$(UUID)/metadata.json
+	@sed -i '/"preferences_ui"/d' build/$(UUID)/metadata.json
 	@cd build/$(UUID) && zip -qr ../../$(UUID)-legacy-store-v$(VERSION).zip .
 	@rm -rf build
 	@echo "✓  $(UUID)-legacy-store-v$(VERSION).zip created"
@@ -139,12 +140,13 @@ build-appstore-enterprise:
 	@sed -e "s/__UUID__/$(UUID)/g" \
 		 -e "s/__VERSION__/$(VERSION)/g" \
 		 metadata_enterprise.json.in > build/$(UUID)/metadata.json
+	@sed -i '/"preferences_ui"/d' build/$(UUID)/metadata.json
 	@cd build/$(UUID) && zip -qr ../../$(UUID)-enterprise-store-v$(VERSION).zip .
 	@rm -rf build
 	@echo "✓  $(UUID)-enterprise-store-v$(VERSION).zip created"
 
 build-appstore-interim:
-	@echo "==> Building INTERIM AppStore zip (for GNOME 41-44)..."
+	@echo "==> Building INTERIM AppStore zip (for GNOME 42-44)..."
 	@rm -rf build && mkdir -p build/$(UUID)
 	$(call copies,$(COMMON_FILES),build/$(UUID))
 	@glib-compile-schemas build/$(UUID)/schemas
@@ -153,6 +155,7 @@ build-appstore-interim:
 	@sed -e "s/__UUID__/$(UUID)/g" \
 		 -e "s/__VERSION__/$(VERSION)/g" \
 		 metadata_interim.json.in > build/$(UUID)/metadata.json
+	@sed -i '/"preferences_ui"/d' build/$(UUID)/metadata.json
 	@cd build/$(UUID) && zip -qr ../../$(UUID)-interim-store-v$(VERSION).zip .
 	@rm -rf build
 	@echo "✓  $(UUID)-interim-store-v$(VERSION).zip created"
@@ -167,6 +170,7 @@ build-appstore-modern:
 	@sed -e "s/__UUID__/$(UUID)/g" \
 		 -e "s/__VERSION__/$(VERSION)/g" \
 		 metadata_modern.json.in > build/$(UUID)/metadata.json
+	@sed -i '/"preferences_ui"/d' build/$(UUID)/metadata.json
 	@cd build/$(UUID) && zip -qr ../../$(UUID)-modern-store-v$(VERSION).zip .
 	@rm -rf build
 	@echo "✓  $(UUID)-modern-store-v$(VERSION).zip created"
@@ -189,7 +193,7 @@ install-enterprise: build-enterprise
 	@echo "✓  Enterprise Extension installed to $(EXTDIR)/$(UUID). Restart GNOME Shell to apply."
 
 install-interim: build-interim
-	@echo "==> Installing INTERIM Extension..."
+	@echo "==> Installing INTERIM Extension (GNOME 42-44)..."
 	@rm -rf $(EXTDIR)/$(UUID)
 	@unzip -q $(UUID)-interim-v$(VERSION).zip -d $(EXTDIR)
 	@rm -f $(UUID)-interim-v$(VERSION).zip
